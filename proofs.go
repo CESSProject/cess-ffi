@@ -1,10 +1,10 @@
-//+build cgo
+// +build cgo
 
 package ffi
 
-// #cgo LDFLAGS: ${SRCDIR}/libfilcrypto.a
-// #cgo pkg-config: ${SRCDIR}/filcrypto.pc
-// #include "./filcrypto.h"
+// #cgo LDFLAGS: ${SRCDIR}/libcesscrypto.a
+// #cgo pkg-config: ${SRCDIR}/cesscrypto.pc
+// #include "./cesscrypto.h"
 import "C"
 import (
 	"os"
