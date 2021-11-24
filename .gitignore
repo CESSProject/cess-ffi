@@ -2,7 +2,7 @@
 **/include
 **/paramcache
 **/target
-.install-cesscrypto
+# .install-cesscrypto
 cesscrypto.h
 cesscrypto.pc
 cess.h
