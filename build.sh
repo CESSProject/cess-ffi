@@ -10,7 +10,7 @@ rustup target add aarch64-apple-darwin --toolchain $(cat rust-toolchain)
 cargo update -p "cess-prooving-system-api"
 cargo install cargo-lipo
 cargo install cbindgen
-cbindgen --clean --config cbindgen.toml --crate filcrypto --output ../include/filcrypto.h
+cbindgen --clean --config cbindgen.toml --crate cesscrypto --output ../include/cesscrypto.h
 cd ..
 FFI_BUILD_FROM_SOURCE=1 make
 make cgo-gen

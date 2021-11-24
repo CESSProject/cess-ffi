@@ -1,5 +1,5 @@
 [package]
-name = "filcrypto"
+name = "cesscrypto"
 description = "FFI Interface to CESS Proofs"
 version = "0.1.0"
 authors = []

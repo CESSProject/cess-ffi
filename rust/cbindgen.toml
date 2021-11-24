@@ -1,5 +1,5 @@
 header = """
-/* filcrypto Header */
+/* cesscrypto Header */
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,7 +11,7 @@ trailer = """
 #endif
 """
 
-include_guard = "filcrypto_H"
+include_guard = "cesscrypto_H"
 include_version = true
 language = "C"
 

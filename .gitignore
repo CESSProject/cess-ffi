@@ -2,10 +2,10 @@
 **/include
 **/paramcache
 **/target
-.install-filcrypto
-filcrypto.h
-filcrypto.pc
-filecoin.h
-filecoin.pc
+.install-cesscrypto
+cesscrypto.h
+cesscrypto.pc
+cess.h
+cess.pc
 *.a
 simulator

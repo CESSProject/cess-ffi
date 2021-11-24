@@ -4,10 +4,10 @@
 set -Exeo pipefail
 auth_header=()
 if [ -n "${GITHUB_TOKEN}" ]; then
-	auth_header=("-H" "Authorization: token ${GITHUB_TOKEN}")
+    auth_header=("-H" "Authorization: token ${GITHUB_TOKEN}")
 fi
 
-# set CWD to the root of filecoin-ffi
+# set CWD to the root of cess-ffi
 #
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -17,7 +17,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 rust_sources_dir="rust"
 
 # an array of values passed as 'target-feature' to the Rust compiler if we're
-# building an optimized libfilcrypto (which takes advantage of some perf-boosting
+# building an optimized libcesscrypto (which takes advantage of some perf-boosting
 # instruction sets)
 #
 #optimized_release_rustc_target_features=$(jq -r '.[].rustc_target_feature' < "${rust_sources_dir}/rustc-target-features-optimized.json")
@@ -25,11 +25,11 @@ rust_sources_dir="rust"
 # each value in this area is checked against the "features" of the hosts CPU
 # in order to determine if the host is suitable for an optimized release
 #
-cpu_features_required_for_optimized_release=$(jq -r '.[].check_cpu_for_feature | select(. != null)' < "${rust_sources_dir}/rustc-target-features-optimized.json")
+cpu_features_required_for_optimized_release=$(jq -r '.[].check_cpu_for_feature | select(. != null)' <"${rust_sources_dir}/rustc-target-features-optimized.json")
 
 main() {
     local __release_flags=$(get_release_flags)
-    if [ "${FFI_BUILD_FROM_SOURCE}" != "1" ] && download_release_tarball __tarball_path "${rust_sources_dir}" "filecoin-ffi" "${__release_flags}"; then
+    if [ "${FFI_BUILD_FROM_SOURCE}" != "1" ] && download_release_tarball __tarball_path "${rust_sources_dir}" "cess-ffi" "${__release_flags}"; then
         local __tmp_dir=$(mktemp -d)
 
         # silence shellcheck warning as the assignment happened in
@@ -39,38 +39,38 @@ main() {
         #
         tar -C "${__tmp_dir}" -xzf "${__tarball_path}"
 
-        # copy build assets into root of filecoin-ffi
+        # copy build assets into root of cess-ffi
         #
-        find -L "${__tmp_dir}" -type f -name filcrypto.h -exec cp -- "{}" . \;
-        find -L "${__tmp_dir}" -type f -name libfilcrypto.a -exec cp -- "{}" . \;
-        find -L "${__tmp_dir}" -type f -name filcrypto.pc -exec cp -- "{}" . \;
+        find -L "${__tmp_dir}" -type f -name cesscrypto.h -exec cp -- "{}" . \;
+        find -L "${__tmp_dir}" -type f -name libcesscrypto.a -exec cp -- "{}" . \;
+        find -L "${__tmp_dir}" -type f -name cesscrypto.pc -exec cp -- "{}" . \;
 
         check_installed_files
 
-        (>&2 echo "[install-filcrypto/main] successfully installed prebuilt libfilcrypto")
+        (echo >&2 "[install-cesscrypto/main] successfully installed prebuilt libcesscrypto")
     else
-        (>&2 echo "[install-filcrypto/main] building libfilcrypto from local sources (dir = ${rust_sources_dir})")
+        (echo >&2 "[install-cesscrypto/main] building libcesscrypto from local sources (dir = ${rust_sources_dir})")
 
-        # build libfilcrypto (and corresponding header and pkg-config)
+        # build libcesscrypto (and corresponding header and pkg-config)
         #
-        build_from_source "filcrypto" "${rust_sources_dir}" "${__release_flags}"
+        build_from_source "cesscrypto" "${rust_sources_dir}" "${__release_flags}"
 
-        # copy from Rust's build directory (target) to root of filecoin-ffi
+        # copy from Rust's build directory (target) to root of cess-ffi
         #
         if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "x86_64" ]; then
-            find -L "${rust_sources_dir}/target/universal/release" -type f -name libfilcrypto.a -exec cp -- "{}" . \;
+            find -L "${rust_sources_dir}/target/universal/release" -type f -name libcesscrypto.a -exec cp -- "{}" . \;
         else
-            find -L "${rust_sources_dir}/target/release" -type f -name libfilcrypto.a -exec cp -- "{}" . \;
+            find -L "${rust_sources_dir}/target/release" -type f -name libcesscrypto.a -exec cp -- "{}" . \;
         fi
-        find -L "${rust_sources_dir}" -type f -name filcrypto.h -exec cp -- "{}" . \;
-        find -L "${rust_sources_dir}" -type f -name filcrypto.pc -exec cp -- "{}" . \;
+        find -L "${rust_sources_dir}" -type f -name cesscrypto.h -exec cp -- "{}" . \;
+        find -L "${rust_sources_dir}" -type f -name cesscrypto.pc -exec cp -- "{}" . \;
 
         pwd
-        ls ./*filcrypto*
+        ls ./*cesscrypto*
 
         check_installed_files
 
-        (>&2 echo "[install-filcrypto/main] successfully built and installed libfilcrypto from source")
+        (echo >&2 "[install-cesscrypto/main] successfully built and installed libcesscrypto from source")
     fi
 }
 
@@ -81,7 +81,7 @@ download_release_tarball() {
     local __release_flags=$4
     local __release_sha1=$(git rev-parse HEAD)
     local __release_tag="${__release_sha1:0:16}"
-    local __release_tag_url="https://api.github.com/repos/filecoin-project/${__repo_name}/releases/tags/${__release_tag}"
+    local __release_tag_url="https://api.github.com/repos/CESSProject/${__repo_name}/releases/tags/${__release_tag}"
 
     # Download the non-optimized standard release.
     release_flag_name="standard"
@@ -92,7 +92,7 @@ download_release_tarball() {
     #
     local __release_name="${__repo_name}-$(uname)-${release_flag_name}"
 
-    (>&2 echo "[download_release_tarball] acquiring release @ ${__release_tag}")
+    (echo >&2 "[download_release_tarball] acquiring release @ ${__release_tag}")
 
     local __release_response=$(curl "${auth_header[@]}" \
         --retry 3 \
@@ -103,7 +103,7 @@ download_release_tarball() {
     local __tar_path="/tmp/${__release_name}_$(basename "${__release_url}").tar.gz"
 
     if [[ -z "${__release_url}" ]]; then
-        (>&2 echo "[download_release_tarball] failed to download release (tag URL: ${__release_tag_url}, response: ${__release_response})")
+        (echo >&2 "[download_release_tarball] failed to download release (tag URL: ${__release_tag_url}, response: ${__release_response})")
         return 1
     fi
 
@@ -117,7 +117,7 @@ download_release_tarball() {
         "${__release_url}")
 
     if ! curl --retry 3 --output "${__tar_path}" "${__asset_url}"; then
-        (>&2 echo "[download_release_tarball] failed to download release asset (tag URL: ${__release_tag_url}, asset URL: ${__asset_url})")
+        (echo >&2 "[download_release_tarball] failed to download release asset (tag URL: ${__release_tag_url}, asset URL: ${__asset_url})")
         return 1
     fi
 
@@ -134,17 +134,17 @@ build_from_source() {
     local __repo_sha1=$(git rev-parse HEAD)
     local __repo_sha1_truncated="${__repo_sha1:0:16}"
 
-    (>&2 echo "building from source @ ${__repo_sha1_truncated}")
+    (echo >&2 "building from source @ ${__repo_sha1_truncated}")
 
     if ! [ -x "$(command -v cargo)" ]; then
-        (>&2 echo '[build_from_source] Error: cargo is not installed.')
-        (>&2 echo '[build_from_source] install Rust toolchain to resolve this problem.')
+        (echo >&2 '[build_from_source] Error: cargo is not installed.')
+        (echo >&2 '[build_from_source] install Rust toolchain to resolve this problem.')
         exit 1
     fi
 
     if ! [ -x "$(command -v rustup)" ]; then
-        (>&2 echo '[build_from_source] Error: rustup is not installed.')
-        (>&2 echo '[build_from_source] install Rust toolchain installer to resolve this problem.')
+        (echo >&2 '[build_from_source] Error: rustup is not installed.')
+        (echo >&2 '[build_from_source] install Rust toolchain installer to resolve this problem.')
         exit 1
     fi
 
@@ -201,7 +201,7 @@ get_release_flags() {
     # determine where to look for CPU features
     #
     if [[ ! -f "/proc/cpuinfo" ]]; then
-        (>&2 echo "[get_release_flags] no /proc/cpuinfo file; falling back to Darwin feature detection")
+        (echo >&2 "[get_release_flags] no /proc/cpuinfo file; falling back to Darwin feature detection")
         __features=$(sysctl -a | grep machdep.cpu | tr '[:upper:]' '[:lower:]' | grep features)
     else
         #aarch64_uname=$(uname -a | grep aarch64)
@@ -248,22 +248,23 @@ get_release_flags() {
 
 check_installed_files() {
     pwd
-    ls ./*filcrypto*
+    ls ./*cesscrypto*
 
-    if [[ ! -f "./filcrypto.h" ]]; then
-        (>&2 echo "[check_installed_files] failed to install filcrypto.h")
+    if [[ ! -f "./cesscrypto.h" ]]; then
+        (echo >&2 "[check_installed_files] failed to install cesscrypto.h")
         exit 1
     fi
 
-    if [[ ! -f "./libfilcrypto.a" ]]; then
-        (>&2 echo "[check_installed_files] failed to install libfilcrypto.a")
+    if [[ ! -f "./libcesscrypto.a" ]]; then
+        (echo >&2 "[check_installed_files] failed to install libcesscrypto.a")
         exit 1
     fi
 
-    if [[ ! -f "./filcrypto.pc" ]]; then
-        (>&2 echo "[check_installed_files] failed to install filcrypto.pc")
+    if [[ ! -f "./cesscrypto.pc" ]]; then
+        (echo >&2 "[check_installed_files] failed to install cesscrypto.pc")
         exit 1
     fi
 }
 
-main "$@"; exit
+main "$@"
+exit

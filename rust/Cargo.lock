@@ -548,6 +548,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "cesscrypto"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bellperson",
+ "bls-signatures",
+ "blstrs",
+ "byteorder 1.4.3",
+ "cbindgen",
+ "cess-proving-system-api",
+ "cess-sp-porep",
+ "drop_struct_macro_derive",
+ "fff",
+ "ffi-toolkit",
+ "fil_logger",
+ "filepath",
+ "group",
+ "libc",
+ "log",
+ "rand 0.8.4",
+ "rand_chacha 0.3.1",
+ "rayon",
+ "rust-gpu-tools",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -939,34 +967,6 @@ dependencies = [
  "atty",
  "flexi_logger",
  "log",
-]
-
-[[package]]
-name = "filcrypto"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bellperson",
- "bls-signatures",
- "blstrs",
- "byteorder 1.4.3",
- "cbindgen",
- "cess-proving-system-api",
- "cess-sp-porep",
- "drop_struct_macro_derive",
- "fff",
- "ffi-toolkit",
- "fil_logger",
- "filepath",
- "group",
- "libc",
- "log",
- "rand 0.8.4",
- "rand_chacha 0.3.1",
- "rayon",
- "rust-gpu-tools",
- "serde_json",
- "tempfile",
 ]
 
 [[package]]

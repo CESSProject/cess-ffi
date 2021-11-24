@@ -3,21 +3,18 @@
 set -Exeo pipefail
 
 main() {
-    if [[ -z "$1" ]]
-    then
-        (>&2 echo '[build-release/main] Error: script requires a library name, e.g. "filecoin" or "snark"')
+    if [[ -z "$1" ]]; then
+        (echo >&2 '[build-release/main] Error: script requires a library name, e.g. "cess" or "snark"')
         exit 1
     fi
 
-    if [[ -z "$2" ]]
-    then
-        (>&2 echo '[build-release/main] Error: script requires a toolchain, e.g. ./build-release.sh +nightly-2019-04-19')
+    if [[ -z "$2" ]]; then
+        (echo >&2 '[build-release/main] Error: script requires a toolchain, e.g. ./build-release.sh +nightly-2019-04-19')
         exit 1
     fi
 
-    if [[ -z "$3" ]]
-    then
-        (>&2 echo '[build-release/main] Error: script requires a build action, e.g. ./build-release.sh [build|lipo]')
+    if [[ -z "$3" ]]; then
+        (echo >&2 '[build-release/main] Error: script requires a build action, e.g. ./build-release.sh [build|lipo]')
         exit 1
     fi
 
@@ -40,10 +37,10 @@ main() {
 
     # parse build output for linker flags
     #
-    local __linker_flags=$(cat ${__build_output_log_tmp} \
-        | grep native-static-libs\: \
-        | head -n 1 \
-        | cut -d ':' -f 3)
+    local __linker_flags=$(cat ${__build_output_log_tmp} |
+        grep native-static-libs\: |
+        head -n 1 |
+        cut -d ':' -f 3)
 
     echo "Linker Flags: ${__linker_flags}"
     if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "x86_64" ]; then
@@ -54,8 +51,8 @@ main() {
         echo "Using Linker Flags: ${__linker_flags}"
 
         find . -type f -name "lib$1.a"
-        rm -f ./target/aarch64-apple-darwin/release/libfilcrypto.a
-        rm -f ./target/x86_64-apple-darwin/release/libfilcrypto.a
+        rm -f ./target/aarch64-apple-darwin/release/libcesscrypto.a
+        rm -f ./target/x86_64-apple-darwin/release/libcesscrypto.a
         echo "Eliminated non-universal binary libraries"
         find . -type f -name "lib$1.a"
     fi
@@ -63,7 +60,7 @@ main() {
     # generate pkg-config
     #
     sed -e "s;@VERSION@;$(git rev-parse HEAD);" \
-        -e "s;@PRIVATE_LIBS@;${__linker_flags};" "$1.pc.template" > "$1.pc"
+        -e "s;@PRIVATE_LIBS@;${__linker_flags};" "$1.pc.template" >"$1.pc"
 
     # ensure header file was built
     #
@@ -74,4 +71,5 @@ main() {
     find -L . -type f -name "lib$1.a" | read
 }
 
-main "$@"; exit
+main "$@"
+exit

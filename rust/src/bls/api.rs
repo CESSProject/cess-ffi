@@ -345,7 +345,7 @@ pub unsafe extern "C" fn fil_private_key_public_key(
     Box::into_raw(Box::new(response))
 }
 
-/// Returns a zero signature, used as placeholder in Filecoin.
+/// Returns a zero signature, used as placeholder in CESS.
 ///
 /// The return value is a pointer to a compressed signature in bytes, of length `SIGNATURE_BYTES`
 #[no_mangle]

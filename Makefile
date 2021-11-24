@@ -1,20 +1,20 @@
-DEPS:=filcrypto.h filcrypto.pc libfilcrypto.a
+DEPS:=cesscrypto.h cesscrypto.pc libcesscrypto.a
 
 all: $(DEPS)
 .PHONY: all
 
-# Create a file so that parallel make doesn't call `./install-filcrypto` for
+# Create a file so that parallel make doesn't call `./install-cesscrypto` for
 # each of the deps
-$(DEPS): .install-filcrypto  ;
+$(DEPS): .install-cesscrypto  ;
 
-.install-filcrypto: rust
+.install-cesscrypto: rust
 	go clean -cache -testcache .
-	./install-filcrypto
+	./install-cesscrypto
 	@touch $@
 
 clean:
 	go clean -cache -testcache .
-	rm -rf $(DEPS) .install-filcrypto
+	rm -rf $(DEPS) .install-cesscrypto
 	rm -f ./runner
 	cd rust && cargo clean && cd ..
 .PHONY: clean
@@ -24,7 +24,7 @@ go-lint: $(DEPS)
 .PHONY: go-lint
 
 shellcheck:
-	shellcheck install-filcrypto
+	shellcheck install-cesscrypto
 
 lint: shellcheck go-lint
 
@@ -33,7 +33,7 @@ cgo-leakdetect: runner
 .PHONY: cgo-leakdetect
 
 cgo-gen: $(DEPS)
-	go run github.com/xlab/c-for-go --nostamp filcrypto.yml
+	go run github.com/xlab/c-for-go --nostamp cesscrypto.yml
 .PHONY: cgo-gen
 
 runner: $(DEPS)

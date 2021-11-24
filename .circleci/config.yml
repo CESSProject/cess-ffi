@@ -11,7 +11,7 @@ executors:
     resource_class: 2xlarge
   rust:
     docker:
-      - image: filecoin/rust:latest
+      - image: cess/rust:latest
     resource_class: 2xlarge
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - prepare
       - go/mod-download
       - run:
-          command: "! go fmt ./... 2>&1 | read"
+          command: '! go fmt ./... 2>&1 | read'
   go_lint:
     description: Run various linters
     executor: golang
@@ -42,21 +42,21 @@ jobs:
         type: boolean
         default: true
     executor: golang
-    working_directory: ~/go/src/github.com/filecoin-project/filecoin-ffi
+    working_directory: ~/go/src/github.com/CESSProject/cess-ffi
     steps:
       - configure_environment_variables
       - prepare
       - build_project
       - restore_parameter_cache
-      - obtain_filecoin_parameters
+      - obtain_cess_parameters
       - save_parameter_cache
       - run_tests:
           run_leak_detector: << parameters.run_leak_detector >>
 
   build_darwin_cgo_bindings:
     macos:
-      xcode: "12.5.0"
-    working_directory: ~/go/src/github.com/filecoin-project/filecoin-ffi
+      xcode: '12.5.0'
+    working_directory: ~/go/src/github.com/CESSProject/cess-ffi
     resource_class: large
     steps:
       - configure_environment_variables:
@@ -82,7 +82,7 @@ jobs:
       - publish_release
   publish_darwin_staticlib:
     macos:
-      xcode: "12.5.0"
+      xcode: '12.5.0'
     working_directory: ~/crate
     steps:
       - configure_environment_variables:
@@ -114,7 +114,7 @@ jobs:
       - run: cd rust && cargo fetch
       - run: cd rust && rustc +$(cat rust-toolchain) --version
       - persist_to_workspace:
-          root: "."
+          root: '.'
           paths:
             - rust/Cargo.lock
       - save_cache:
@@ -158,7 +158,7 @@ workflows:
     jobs:
       # Lint the install Bash script
       - shellcheck/check:
-          pattern: 'install-filcrypto'
+          pattern: 'install-cesscrypto'
       - cargo_fetch
       - rustfmt:
           requires:
@@ -198,7 +198,7 @@ commands:
           condition: << parameters.linux >>
           steps:
             - go/install-ssh
-            - go/install: {package: git}
+            - go/install: { package: git }
             - run: sudo apt update
             - run: sudo apt-get update
             - run: sudo apt-get install -y jq valgrind ocl-icd-opencl-dev clang libssl-dev libhwloc-dev
@@ -238,7 +238,7 @@ commands:
             RELEASE_NAME="${CIRCLE_PROJECT_REPONAME}-$(uname)-standard"
 
             # Note: the blst dependency uses the portable configuration for maximum compatibility
-            ./scripts/build-release.sh filcrypto $(cat ./rust-toolchain) build --verbose --locked --no-default-features --features multicore-sdr,opencl,blst-portable
+            ./scripts/build-release.sh cesscrypto $(cat ./rust-toolchain) build --verbose --locked --no-default-features --features multicore-sdr,opencl,blst-portable
             ./scripts/package-release.sh $TARBALL_PATH
             ./scripts/publish-release.sh $TARBALL_PATH $RELEASE_NAME
       - run:
@@ -249,7 +249,7 @@ commands:
             TARBALL_PATH="/tmp/${CIRCLE_PROJECT_REPONAME}-$(uname)-optimized.tar.gz"
             RUSTFLAGS="-C target-feature=$(cat rustc-target-features-optimized.json | jq -r '.[].rustc_target_feature' | tr '\n' ',')"
 
-            ./scripts/build-release.sh filcrypto $(cat ./rust-toolchain) build --verbose --locked --no-default-features --features multicore-sdr,opencl
+            ./scripts/build-release.sh cesscrypto $(cat ./rust-toolchain) build --verbose --locked --no-default-features --features multicore-sdr,opencl
             ./scripts/package-release.sh $TARBALL_PATH
 
   publish_darwin_release:
@@ -263,7 +263,7 @@ commands:
             TARBALL_PATH="/tmp/${RELEASE_NAME}.tar.gz"
 
             # Note: the blst dependency uses the portable configuration for maximum compatibility
-            ./scripts/build-release.sh filcrypto $(cat rust-toolchain) lipo --targets x86_64-apple-darwin,aarch64-apple-darwin --verbose --locked --no-default-features --features multicore-sdr,opencl,blst-portable
+            ./scripts/build-release.sh cesscrypto $(cat rust-toolchain) lipo --targets x86_64-apple-darwin,aarch64-apple-darwin --verbose --locked --no-default-features --features multicore-sdr,opencl,blst-portable
             ./scripts/package-release.sh $TARBALL_PATH
             ./scripts/publish-release.sh $TARBALL_PATH $RELEASE_NAME
   configure_environment_variables:
@@ -280,7 +280,7 @@ commands:
       - run:
           name: Configure environment variables
           command: |
-            echo 'export FIL_PROOFS_PARAMETER_CACHE="${HOME}/filecoin-proof-parameters/"' >> $BASH_ENV
+            echo 'export CESS_PROOFS_PARAMETER_CACHE="${HOME}/cess-proofs-parameters/"' >> $BASH_ENV
             echo 'export GO111MODULE=on' >> $BASH_ENV
             echo 'export GOPATH="${HOME}/go"' >> $BASH_ENV
             echo 'export PATH="/usr/local/go/bin:${HOME}/.cargo/bin:${PATH}:${HOME}/go/bin:${HOME}/.bin"' >> $BASH_ENV
@@ -293,13 +293,13 @@ commands:
                 name: Add a few more environment variables
                 command: |
                   echo 'export PATH="${HOME}/.cargo/bin:${HOME}/.bin:${PATH}"' >> $BASH_ENV
-  obtain_filecoin_parameters:
+  obtain_cess_parameters:
     steps:
       - run: |
           DIR=$(pwd)
           cd $(mktemp -d)
-          GOPATH=/tmp GO111MODULE=off go get github.com/filecoin-project/go-paramfetch/paramfetch
-          GOPATH=/tmp GO111MODULE=off go build -o go-paramfetch github.com/filecoin-project/go-paramfetch/paramfetch
+          GOPATH=/tmp GO111MODULE=off go get github.com/CESSProject/go-paramfetch/paramfetch
+          GOPATH=/tmp GO111MODULE=off go build -o go-paramfetch github.com/CESSProject/go-paramfetch/paramfetch
           ./go-paramfetch 2048 "${DIR}/parameters.json" "${DIR}/srs-inner-product.json"
 
   build_project:
@@ -334,7 +334,7 @@ commands:
                 no_output_timeout: 90m
       - run:
           name: Run the Rust tests
-          command: cd rust && FIL_PROOFS_PARAMETER_CACHE="${HOME}/filecoin-proof-parameters/" RUST_LOG=info cargo test --all --release -- --test-threads 1&& cd ..
+          command: cd rust && CESS_PROOFS_PARAMETER_CACHE="${HOME}/cess-proofs-parameters/" RUST_LOG=info cargo test --all --release -- --test-threads 1&& cd ..
           no_output_timeout: 90m
       - run:
           name: Run the Go tests
@@ -355,4 +355,4 @@ commands:
       - save_cache:
           key: v28-proof-params-{{ arch }}
           paths:
-            - "~/filecoin-proof-parameters/"
+            - '~/cess-proof-sparameters/'
