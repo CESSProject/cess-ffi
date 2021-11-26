@@ -6,21 +6,21 @@ use anyhow::{ensure, Result};
 use cess_proving_system_api::{PrivateReplicaInfo, PublicReplicaInfo, SectorId};
 use ffi_toolkit::{c_str_to_pbuf, c_str_to_rust_str};
 
-use super::types::{fil_PrivateReplicaInfo, fil_PublicReplicaInfo, fil_RegisteredPoStProof};
+use super::types::{cess_PrivateReplicaInfo, cess_PublicReplicaInfo, cess_RegisteredPoStProof};
 use crate::proofs::types::{
-    fil_PartitionSnarkProof, fil_PoStProof, PartitionSnarkProof, PoStProof,
+    cess_PartitionSnarkProof, cess_PoStProof, PartitionSnarkProof, PoStProof,
 };
 
 #[derive(Debug, Clone)]
 struct PublicReplicaInfoTmp {
-    pub registered_proof: fil_RegisteredPoStProof,
+    pub registered_proof: cess_RegisteredPoStProof,
     pub comm_r: [u8; 32],
     pub sector_id: u64,
 }
 
 #[allow(clippy::type_complexity)]
 pub unsafe fn to_public_replica_info_map(
-    replicas_ptr: *const fil_PublicReplicaInfo,
+    replicas_ptr: *const cess_PublicReplicaInfo,
     replicas_len: libc::size_t,
 ) -> Result<BTreeMap<SectorId, PublicReplicaInfo>> {
     use rayon::prelude::*;
@@ -58,7 +58,7 @@ pub unsafe fn to_public_replica_info_map(
 
 #[derive(Debug, Clone)]
 struct PrivateReplicaInfoTmp {
-    pub registered_proof: fil_RegisteredPoStProof,
+    pub registered_proof: cess_RegisteredPoStProof,
     pub cache_dir_path: std::path::PathBuf,
     pub comm_r: [u8; 32],
     pub replica_path: std::path::PathBuf,
@@ -66,7 +66,7 @@ struct PrivateReplicaInfoTmp {
 }
 
 pub unsafe fn to_private_replica_info_map(
-    replicas_ptr: *const fil_PrivateReplicaInfo,
+    replicas_ptr: *const cess_PrivateReplicaInfo,
     replicas_len: libc::size_t,
 ) -> Result<BTreeMap<SectorId, PrivateReplicaInfo>> {
     use rayon::prelude::*;
@@ -116,7 +116,7 @@ pub unsafe fn to_private_replica_info_map(
 }
 
 pub unsafe fn c_to_rust_post_proofs(
-    post_proofs_ptr: *const fil_PoStProof,
+    post_proofs_ptr: *const cess_PoStProof,
     post_proofs_len: libc::size_t,
 ) -> Result<Vec<PoStProof>> {
     ensure!(
@@ -136,7 +136,7 @@ pub unsafe fn c_to_rust_post_proofs(
 }
 
 pub unsafe fn c_to_rust_partition_proofs(
-    partition_proofs_ptr: *const fil_PartitionSnarkProof,
+    partition_proofs_ptr: *const cess_PartitionSnarkProof,
     partition_proofs_len: libc::size_t,
 ) -> Result<Vec<PartitionSnarkProof>> {
     ensure!(

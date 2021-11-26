@@ -1,6 +1,3 @@
-use ffi_toolkit::{
-    c_str_to_pbuf, catch_panic_response, raw_ptr, rust_str_to_c_str, FCPResponseStatus,
-};
 use cess_proving_system_api::seal::{
     add_piece, aggregate_seal_commit_proofs, clear_cache, compute_comm_d, fauxrep, fauxrep2,
     generate_piece_commitment, get_seal_inputs, seal_commit_phase1, seal_commit_phase2,
@@ -10,6 +7,9 @@ use cess_proving_system_api::seal::{
 use cess_proving_system_api::{
     PartitionSnarkProof, PieceInfo, PrivateReplicaInfo, RegisteredPoStProof, RegisteredSealProof,
     SectorId, StorageProofsError, UnpaddedByteIndex, UnpaddedBytesAmount,
+};
+use ffi_toolkit::{
+    c_str_to_pbuf, catch_panic_response, raw_ptr, rust_str_to_c_str, FCPResponseStatus,
 };
 
 use blstrs::Scalar as Fr;
@@ -33,20 +33,20 @@ pub type VanillaProof = Vec<u8>;
 ///
 #[no_mangle]
 #[cfg(not(target_os = "windows"))]
-pub unsafe extern "C" fn fil_write_with_alignment(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_write_with_alignment(
+    registered_proof: cess_RegisteredSealProof,
     src_fd: libc::c_int,
     src_size: u64,
     dst_fd: libc::c_int,
     existing_piece_sizes_ptr: *const u64,
     existing_piece_sizes_len: libc::size_t,
-) -> *mut fil_WriteWithAlignmentResponse {
+) -> *mut cess_WriteWithAlignmentResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("write_with_alignment: start");
 
-        let mut response = fil_WriteWithAlignmentResponse::default();
+        let mut response = cess_WriteWithAlignmentResponse::default();
 
         let slice: &[u64] =
             std::slice::from_raw_parts(existing_piece_sizes_ptr, existing_piece_sizes_len);
@@ -87,18 +87,18 @@ pub unsafe extern "C" fn fil_write_with_alignment(
 ///
 #[no_mangle]
 #[cfg(not(target_os = "windows"))]
-pub unsafe extern "C" fn fil_write_without_alignment(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_write_without_alignment(
+    registered_proof: cess_RegisteredSealProof,
     src_fd: libc::c_int,
     src_size: u64,
     dst_fd: libc::c_int,
-) -> *mut fil_WriteWithoutAlignmentResponse {
+) -> *mut cess_WriteWithoutAlignmentResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("write_without_alignment: start");
 
-        let mut response = fil_WriteWithoutAlignmentResponse::default();
+        let mut response = cess_WriteWithoutAlignmentResponse::default();
 
         match write_and_preprocess(
             registered_proof.into(),
@@ -124,17 +124,17 @@ pub unsafe extern "C" fn fil_write_without_alignment(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_fauxrep(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_fauxrep(
+    registered_proof: cess_RegisteredSealProof,
     cache_dir_path: *const libc::c_char,
     sealed_sector_path: *const libc::c_char,
-) -> *mut fil_FauxRepResponse {
+) -> *mut cess_FauxRepResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("fauxrep: start");
 
-        let mut response: fil_FauxRepResponse = Default::default();
+        let mut response: cess_FauxRepResponse = Default::default();
 
         let result = fauxrep(
             registered_proof.into(),
@@ -160,17 +160,17 @@ pub unsafe extern "C" fn fil_fauxrep(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_fauxrep2(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_fauxrep2(
+    registered_proof: cess_RegisteredSealProof,
     cache_dir_path: *const libc::c_char,
     existing_p_aux_path: *const libc::c_char,
-) -> *mut fil_FauxRepResponse {
+) -> *mut cess_FauxRepResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("fauxrep2: start");
 
-        let mut response: fil_FauxRepResponse = Default::default();
+        let mut response: cess_FauxRepResponse = Default::default();
 
         let result = fauxrep2(
             registered_proof.into(),
@@ -198,27 +198,27 @@ pub unsafe extern "C" fn fil_fauxrep2(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_seal_pre_commit_phase1(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_seal_pre_commit_phase1(
+    registered_proof: cess_RegisteredSealProof,
     cache_dir_path: *const libc::c_char,
     staged_sector_path: *const libc::c_char,
     sealed_sector_path: *const libc::c_char,
     sector_id: u64,
-    prover_id: fil_32ByteArray,
-    ticket: fil_32ByteArray,
-    pieces_ptr: *const fil_PublicPieceInfo,
+    prover_id: cess_32ByteArray,
+    ticket: cess_32ByteArray,
+    pieces_ptr: *const cess_PublicPieceInfo,
     pieces_len: libc::size_t,
-) -> *mut fil_SealPreCommitPhase1Response {
+) -> *mut cess_SealPreCommitPhase1Response {
     catch_panic_response(|| {
         init_log();
 
         info!("seal_pre_commit_phase1: start");
 
-        let slice: &[fil_PublicPieceInfo] = std::slice::from_raw_parts(pieces_ptr, pieces_len);
+        let slice: &[cess_PublicPieceInfo] = std::slice::from_raw_parts(pieces_ptr, pieces_len);
         let public_pieces: Vec<PieceInfo> =
             slice.to_vec().iter().cloned().map(Into::into).collect();
 
-        let mut response: fil_SealPreCommitPhase1Response = Default::default();
+        let mut response: cess_SealPreCommitPhase1Response = Default::default();
 
         let result = seal_pre_commit_phase1(
             registered_proof.into(),
@@ -254,18 +254,18 @@ pub unsafe extern "C" fn fil_seal_pre_commit_phase1(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_seal_pre_commit_phase2(
+pub unsafe extern "C" fn cess_seal_pre_commit_phase2(
     seal_pre_commit_phase1_output_ptr: *const u8,
     seal_pre_commit_phase1_output_len: libc::size_t,
     cache_dir_path: *const libc::c_char,
     sealed_sector_path: *const libc::c_char,
-) -> *mut fil_SealPreCommitPhase2Response {
+) -> *mut cess_SealPreCommitPhase2Response {
     catch_panic_response(|| {
         init_log();
 
         info!("seal_pre_commit_phase2: start");
 
-        let mut response: fil_SealPreCommitPhase2Response = Default::default();
+        let mut response: cess_SealPreCommitPhase2Response = Default::default();
 
         let phase_1_output = serde_json::from_slice(from_raw_parts(
             seal_pre_commit_phase1_output_ptr,
@@ -303,25 +303,25 @@ pub unsafe extern "C" fn fil_seal_pre_commit_phase2(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_seal_commit_phase1(
-    registered_proof: fil_RegisteredSealProof,
-    comm_r: fil_32ByteArray,
-    comm_d: fil_32ByteArray,
+pub unsafe extern "C" fn cess_seal_commit_phase1(
+    registered_proof: cess_RegisteredSealProof,
+    comm_r: cess_32ByteArray,
+    comm_d: cess_32ByteArray,
     cache_dir_path: *const libc::c_char,
     replica_path: *const libc::c_char,
     sector_id: u64,
-    prover_id: fil_32ByteArray,
-    ticket: fil_32ByteArray,
-    seed: fil_32ByteArray,
-    pieces_ptr: *const fil_PublicPieceInfo,
+    prover_id: cess_32ByteArray,
+    ticket: cess_32ByteArray,
+    seed: cess_32ByteArray,
+    pieces_ptr: *const cess_PublicPieceInfo,
     pieces_len: libc::size_t,
-) -> *mut fil_SealCommitPhase1Response {
+) -> *mut cess_SealCommitPhase1Response {
     catch_panic_response(|| {
         init_log();
 
         info!("seal_commit_phase1: start");
 
-        let mut response = fil_SealCommitPhase1Response::default();
+        let mut response = cess_SealCommitPhase1Response::default();
 
         let spcp2o = SealPreCommitPhase2Output {
             registered_proof: registered_proof.into(),
@@ -329,7 +329,7 @@ pub unsafe extern "C" fn fil_seal_commit_phase1(
             comm_d: comm_d.inner,
         };
 
-        let slice: &[fil_PublicPieceInfo] = std::slice::from_raw_parts(pieces_ptr, pieces_len);
+        let slice: &[cess_PublicPieceInfo] = std::slice::from_raw_parts(pieces_ptr, pieces_len);
         let public_pieces: Vec<PieceInfo> =
             slice.to_vec().iter().cloned().map(Into::into).collect();
 
@@ -364,18 +364,18 @@ pub unsafe extern "C" fn fil_seal_commit_phase1(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_seal_commit_phase2(
+pub unsafe extern "C" fn cess_seal_commit_phase2(
     seal_commit_phase1_output_ptr: *const u8,
     seal_commit_phase1_output_len: libc::size_t,
     sector_id: u64,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_SealCommitPhase2Response {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_SealCommitPhase2Response {
     catch_panic_response(|| {
         init_log();
 
         info!("seal_commit_phase2: start");
 
-        let mut response = fil_SealCommitPhase2Response::default();
+        let mut response = cess_SealCommitPhase2Response::default();
 
         let scp1o = serde_json::from_slice(from_raw_parts(
             seal_commit_phase1_output_ptr,
@@ -406,31 +406,31 @@ pub unsafe extern "C" fn fil_seal_commit_phase2(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_aggregate_seal_proofs(
-    registered_proof: fil_RegisteredSealProof,
-    registered_aggregation: fil_RegisteredAggregationProof,
-    comm_rs_ptr: *const fil_32ByteArray,
+pub unsafe extern "C" fn cess_aggregate_seal_proofs(
+    registered_proof: cess_RegisteredSealProof,
+    registered_aggregation: cess_RegisteredAggregationProof,
+    comm_rs_ptr: *const cess_32ByteArray,
     comm_rs_len: libc::size_t,
-    seeds_ptr: *const fil_32ByteArray,
+    seeds_ptr: *const cess_32ByteArray,
     seeds_len: libc::size_t,
-    seal_commit_responses_ptr: *const fil_SealCommitPhase2Response,
+    seal_commit_responses_ptr: *const cess_SealCommitPhase2Response,
     seal_commit_responses_len: libc::size_t,
-) -> *mut fil_AggregateProof {
+) -> *mut cess_AggregateProof {
     catch_panic_response(|| {
         init_log();
         info!("aggregate_seal_proofs: start");
 
-        let responses: &[fil_SealCommitPhase2Response] =
+        let responses: &[cess_SealCommitPhase2Response] =
             std::slice::from_raw_parts(seal_commit_responses_ptr, seal_commit_responses_len);
         let outputs: Vec<SealCommitPhase2Output> = responses.iter().map(|x| x.into()).collect();
 
-        let raw_comm_rs: &[fil_32ByteArray] = std::slice::from_raw_parts(comm_rs_ptr, comm_rs_len);
+        let raw_comm_rs: &[cess_32ByteArray] = std::slice::from_raw_parts(comm_rs_ptr, comm_rs_len);
         let comm_rs: Vec<[u8; 32]> = raw_comm_rs.iter().map(|x| x.inner).collect();
 
-        let raw_seeds: &[fil_32ByteArray] = std::slice::from_raw_parts(seeds_ptr, seeds_len);
+        let raw_seeds: &[cess_32ByteArray] = std::slice::from_raw_parts(seeds_ptr, seeds_len);
         let seeds: Vec<[u8; 32]> = raw_seeds.iter().map(|x| x.inner).collect();
 
-        let mut response = fil_AggregateProof::default();
+        let mut response = cess_AggregateProof::default();
 
         let result = aggregate_seal_commit_proofs(
             registered_proof.into(),
@@ -464,9 +464,9 @@ pub unsafe extern "C" fn fil_aggregate_seal_proofs(
 ///
 #[no_mangle]
 pub fn convert_aggregation_inputs(
-    registered_proof: fil_RegisteredSealProof,
-    prover_id: fil_32ByteArray,
-    input: &fil_AggregationInputs,
+    registered_proof: cess_RegisteredSealProof,
+    prover_id: cess_32ByteArray,
+    input: &cess_AggregationInputs,
 ) -> anyhow::Result<Vec<Vec<Fr>>> {
     get_seal_inputs(
         registered_proof.into(),
@@ -482,21 +482,21 @@ pub fn convert_aggregation_inputs(
 /// Verifies the output of an aggregated seal.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_verify_aggregate_seal_proof(
-    registered_proof: fil_RegisteredSealProof,
-    registered_aggregation: fil_RegisteredAggregationProof,
-    prover_id: fil_32ByteArray,
+pub unsafe extern "C" fn cess_verify_aggregate_seal_proof(
+    registered_proof: cess_RegisteredSealProof,
+    registered_aggregation: cess_RegisteredAggregationProof,
+    prover_id: cess_32ByteArray,
     proof_ptr: *const u8,
     proof_len: libc::size_t,
-    commit_inputs_ptr: *mut fil_AggregationInputs,
+    commit_inputs_ptr: *mut cess_AggregationInputs,
     commit_inputs_len: libc::size_t,
-) -> *mut fil_VerifyAggregateSealProofResponse {
+) -> *mut cess_VerifyAggregateSealProofResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("verify_aggregate_seal_proof: start");
 
-        let commit_inputs: &[fil_AggregationInputs] =
+        let commit_inputs: &[cess_AggregationInputs] =
             std::slice::from_raw_parts(commit_inputs_ptr, commit_inputs_len);
 
         let inputs: anyhow::Result<Vec<Vec<Fr>>> = commit_inputs
@@ -507,7 +507,7 @@ pub unsafe extern "C" fn fil_verify_aggregate_seal_proof(
                 Ok(acc)
             });
 
-        let mut response = fil_VerifyAggregateSealProofResponse::default();
+        let mut response = cess_VerifyAggregateSealProofResponse::default();
 
         match inputs {
             Ok(inputs) => {
@@ -560,18 +560,18 @@ pub unsafe extern "C" fn fil_verify_aggregate_seal_proof(
 
 /// TODO: document
 #[no_mangle]
-pub unsafe extern "C" fn fil_unseal_range(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_unseal_range(
+    registered_proof: cess_RegisteredSealProof,
     cache_dir_path: *const libc::c_char,
     sealed_sector_fd_raw: libc::c_int,
     unseal_output_fd_raw: libc::c_int,
     sector_id: u64,
-    prover_id: fil_32ByteArray,
-    ticket: fil_32ByteArray,
-    comm_d: fil_32ByteArray,
+    prover_id: cess_32ByteArray,
+    ticket: cess_32ByteArray,
+    comm_d: cess_32ByteArray,
     unpadded_byte_index: u64,
     unpadded_bytes_amount: u64,
-) -> *mut fil_UnsealRangeResponse {
+) -> *mut cess_UnsealRangeResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -600,7 +600,7 @@ pub unsafe extern "C" fn fil_unseal_range(
         let _ = sealed_sector.into_raw_fd();
         let _ = unseal_output.into_raw_fd();
 
-        let mut response = fil_UnsealRangeResponse::default();
+        let mut response = cess_UnsealRangeResponse::default();
 
         match result {
             Ok(_) => {
@@ -621,17 +621,17 @@ pub unsafe extern "C" fn fil_unseal_range(
 /// Verifies the output of seal.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_verify_seal(
-    registered_proof: fil_RegisteredSealProof,
-    comm_r: fil_32ByteArray,
-    comm_d: fil_32ByteArray,
-    prover_id: fil_32ByteArray,
-    ticket: fil_32ByteArray,
-    seed: fil_32ByteArray,
+pub unsafe extern "C" fn cess_verify_seal(
+    registered_proof: cess_RegisteredSealProof,
+    comm_r: cess_32ByteArray,
+    comm_d: cess_32ByteArray,
+    prover_id: cess_32ByteArray,
+    ticket: cess_32ByteArray,
+    seed: cess_32ByteArray,
     sector_id: u64,
     proof_ptr: *const u8,
     proof_len: libc::size_t,
-) -> *mut super::types::fil_VerifySealResponse {
+) -> *mut super::types::cess_VerifySealResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -650,7 +650,7 @@ pub unsafe extern "C" fn fil_verify_seal(
             &proof_bytes,
         );
 
-        let mut response = fil_VerifySealResponse::default();
+        let mut response = cess_VerifySealResponse::default();
 
         match result {
             Ok(true) => {
@@ -676,18 +676,18 @@ pub unsafe extern "C" fn fil_verify_seal(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_winning_post_sector_challenge(
-    registered_proof: fil_RegisteredPoStProof,
-    randomness: fil_32ByteArray,
+pub unsafe extern "C" fn cess_generate_winning_post_sector_challenge(
+    registered_proof: cess_RegisteredPoStProof,
+    randomness: cess_32ByteArray,
     sector_set_len: u64,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_GenerateWinningPoStSectorChallenge {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_GenerateWinningPoStSectorChallenge {
     catch_panic_response(|| {
         init_log();
 
         info!("generate_winning_post_sector_challenge: start");
 
-        let mut response = fil_GenerateWinningPoStSectorChallenge::default();
+        let mut response = cess_GenerateWinningPoStSectorChallenge::default();
 
         let result = cess_proving_system_api::post::generate_winning_post_sector_challenge(
             registered_proof.into(),
@@ -721,13 +721,13 @@ pub unsafe extern "C" fn fil_generate_winning_post_sector_challenge(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_fallback_sector_challenges(
-    registered_proof: fil_RegisteredPoStProof,
-    randomness: fil_32ByteArray,
+pub unsafe extern "C" fn cess_generate_fallback_sector_challenges(
+    registered_proof: cess_RegisteredPoStProof,
+    randomness: cess_32ByteArray,
     sector_ids_ptr: *const u64,
     sector_ids_len: libc::size_t,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_GenerateFallbackSectorChallengesResponse {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_GenerateFallbackSectorChallengesResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -743,7 +743,7 @@ pub unsafe extern "C" fn fil_generate_fallback_sector_challenges(
             prover_id.inner,
         );
 
-        let mut response = fil_GenerateFallbackSectorChallengesResponse::default();
+        let mut response = cess_GenerateFallbackSectorChallengesResponse::default();
 
         match result {
             Ok(output) => {
@@ -806,11 +806,11 @@ pub unsafe extern "C" fn fil_generate_fallback_sector_challenges(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_single_vanilla_proof(
-    replica: fil_PrivateReplicaInfo,
+pub unsafe extern "C" fn cess_generate_single_vanilla_proof(
+    replica: cess_PrivateReplicaInfo,
     challenges_ptr: *const u64,
     challenges_len: libc::size_t,
-) -> *mut fil_GenerateSingleVanillaProofResponse {
+) -> *mut cess_GenerateSingleVanillaProofResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -840,7 +840,7 @@ pub unsafe extern "C" fn fil_generate_single_vanilla_proof(
             &challenges,
         );
 
-        let mut response = fil_GenerateSingleVanillaProofResponse::default();
+        let mut response = cess_GenerateSingleVanillaProofResponse::default();
 
         match result {
             Ok(output) => {
@@ -865,19 +865,19 @@ pub unsafe extern "C" fn fil_generate_single_vanilla_proof(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_winning_post_with_vanilla(
-    registered_proof: fil_RegisteredPoStProof,
-    randomness: fil_32ByteArray,
-    prover_id: fil_32ByteArray,
-    vanilla_proofs_ptr: *const fil_VanillaProof,
+pub unsafe extern "C" fn cess_generate_winning_post_with_vanilla(
+    registered_proof: cess_RegisteredPoStProof,
+    randomness: cess_32ByteArray,
+    prover_id: cess_32ByteArray,
+    vanilla_proofs_ptr: *const cess_VanillaProof,
     vanilla_proofs_len: libc::size_t,
-) -> *mut fil_GenerateWinningPoStResponse {
+) -> *mut cess_GenerateWinningPoStResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("generate_winning_post_with_vanilla: start");
 
-        let proofs: &[fil_VanillaProof] =
+        let proofs: &[cess_VanillaProof] =
             std::slice::from_raw_parts(vanilla_proofs_ptr, vanilla_proofs_len);
         let vanilla_proofs: Vec<VanillaProof> = proofs
             .iter()
@@ -895,15 +895,15 @@ pub unsafe extern "C" fn fil_generate_winning_post_with_vanilla(
             &vanilla_proofs,
         );
 
-        let mut response = fil_GenerateWinningPoStResponse::default();
+        let mut response = cess_GenerateWinningPoStResponse::default();
 
         match result {
             Ok(output) => {
-                let mapped: Vec<fil_PoStProof> = output
+                let mapped: Vec<cess_PoStProof> = output
                     .iter()
                     .cloned()
                     .map(|(t, proof)| {
-                        let out = fil_PoStProof {
+                        let out = cess_PoStProof {
                             registered_proof: (t).into(),
                             proof_len: proof.len(),
                             proof_ptr: proof.as_ptr(),
@@ -936,18 +936,18 @@ pub unsafe extern "C" fn fil_generate_winning_post_with_vanilla(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_winning_post(
-    randomness: fil_32ByteArray,
-    replicas_ptr: *const fil_PrivateReplicaInfo,
+pub unsafe extern "C" fn cess_generate_winning_post(
+    randomness: cess_32ByteArray,
+    replicas_ptr: *const cess_PrivateReplicaInfo,
     replicas_len: libc::size_t,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_GenerateWinningPoStResponse {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_GenerateWinningPoStResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("generate_winning_post: start");
 
-        let mut response = fil_GenerateWinningPoStResponse::default();
+        let mut response = cess_GenerateWinningPoStResponse::default();
 
         let result = to_private_replica_info_map(replicas_ptr, replicas_len).and_then(|rs| {
             cess_proving_system_api::post::generate_winning_post(
@@ -959,11 +959,11 @@ pub unsafe extern "C" fn fil_generate_winning_post(
 
         match result {
             Ok(output) => {
-                let mapped: Vec<fil_PoStProof> = output
+                let mapped: Vec<cess_PoStProof> = output
                     .iter()
                     .cloned()
                     .map(|(t, proof)| {
-                        let out = fil_PoStProof {
+                        let out = cess_PoStProof {
                             registered_proof: (t).into(),
                             proof_len: proof.len(),
                             proof_ptr: proof.as_ptr(),
@@ -994,20 +994,20 @@ pub unsafe extern "C" fn fil_generate_winning_post(
 
 /// Verifies that a proof-of-spacetime is valid.
 #[no_mangle]
-pub unsafe extern "C" fn fil_verify_winning_post(
-    randomness: fil_32ByteArray,
-    replicas_ptr: *const fil_PublicReplicaInfo,
+pub unsafe extern "C" fn cess_verify_winning_post(
+    randomness: cess_32ByteArray,
+    replicas_ptr: *const cess_PublicReplicaInfo,
     replicas_len: libc::size_t,
-    proofs_ptr: *const fil_PoStProof,
+    proofs_ptr: *const cess_PoStProof,
     proofs_len: libc::size_t,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_VerifyWinningPoStResponse {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_VerifyWinningPoStResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("verify_winning_post: start");
 
-        let mut response = fil_VerifyWinningPoStResponse::default();
+        let mut response = cess_VerifyWinningPoStResponse::default();
 
         let convert = super::helpers::to_public_replica_info_map(replicas_ptr, replicas_len);
 
@@ -1042,13 +1042,13 @@ pub unsafe extern "C" fn fil_verify_winning_post(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_window_post_with_vanilla(
-    registered_proof: fil_RegisteredPoStProof,
-    randomness: fil_32ByteArray,
-    prover_id: fil_32ByteArray,
-    vanilla_proofs_ptr: *const fil_VanillaProof,
+pub unsafe extern "C" fn cess_generate_window_post_with_vanilla(
+    registered_proof: cess_RegisteredPoStProof,
+    randomness: cess_32ByteArray,
+    prover_id: cess_32ByteArray,
+    vanilla_proofs_ptr: *const cess_VanillaProof,
     vanilla_proofs_len: libc::size_t,
-) -> *mut fil_GenerateWindowPoStResponse {
+) -> *mut cess_GenerateWindowPoStResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -1071,15 +1071,15 @@ pub unsafe extern "C" fn fil_generate_window_post_with_vanilla(
             &vanilla_proofs,
         );
 
-        let mut response = fil_GenerateWindowPoStResponse::default();
+        let mut response = cess_GenerateWindowPoStResponse::default();
 
         match result {
             Ok(output) => {
-                let mapped: Vec<fil_PoStProof> = output
+                let mapped: Vec<cess_PoStProof> = output
                     .iter()
                     .cloned()
                     .map(|(t, proof)| {
-                        let out = fil_PoStProof {
+                        let out = cess_PoStProof {
                             registered_proof: (t).into(),
                             proof_len: proof.len(),
                             proof_ptr: proof.as_ptr(),
@@ -1124,30 +1124,34 @@ pub unsafe extern "C" fn fil_generate_window_post_with_vanilla(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_window_post(
-    randomness: fil_32ByteArray,
-    replicas_ptr: *const fil_PrivateReplicaInfo,
+pub unsafe extern "C" fn cess_generate_window_post(
+    randomness: cess_32ByteArray,
+    replicas_ptr: *const cess_PrivateReplicaInfo,
     replicas_len: libc::size_t,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_GenerateWindowPoStResponse {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_GenerateWindowPoStResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("generate_window_post: start");
 
-        let mut response = fil_GenerateWindowPoStResponse::default();
+        let mut response = cess_GenerateWindowPoStResponse::default();
 
         let result = to_private_replica_info_map(replicas_ptr, replicas_len).and_then(|rs| {
-            cess_proving_system_api::post::generate_window_post(&randomness.inner, &rs, prover_id.inner)
+            cess_proving_system_api::post::generate_window_post(
+                &randomness.inner,
+                &rs,
+                prover_id.inner,
+            )
         });
 
         match result {
             Ok(output) => {
-                let mapped: Vec<fil_PoStProof> = output
+                let mapped: Vec<cess_PoStProof> = output
                     .iter()
                     .cloned()
                     .map(|(t, proof)| {
-                        let out = fil_PoStProof {
+                        let out = cess_PoStProof {
                             registered_proof: (t).into(),
                             proof_len: proof.len(),
                             proof_ptr: proof.as_ptr(),
@@ -1191,20 +1195,20 @@ pub unsafe extern "C" fn fil_generate_window_post(
 
 /// Verifies that a proof-of-spacetime is valid.
 #[no_mangle]
-pub unsafe extern "C" fn fil_verify_window_post(
-    randomness: fil_32ByteArray,
-    replicas_ptr: *const fil_PublicReplicaInfo,
+pub unsafe extern "C" fn cess_verify_window_post(
+    randomness: cess_32ByteArray,
+    replicas_ptr: *const cess_PublicReplicaInfo,
     replicas_len: libc::size_t,
-    proofs_ptr: *const fil_PoStProof,
+    proofs_ptr: *const cess_PoStProof,
     proofs_len: libc::size_t,
-    prover_id: fil_32ByteArray,
-) -> *mut fil_VerifyWindowPoStResponse {
+    prover_id: cess_32ByteArray,
+) -> *mut cess_VerifyWindowPoStResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("verify_window_post: start");
 
-        let mut response = fil_VerifyWindowPoStResponse::default();
+        let mut response = cess_VerifyWindowPoStResponse::default();
 
         let convert = super::helpers::to_public_replica_info_map(replicas_ptr, replicas_len);
 
@@ -1243,17 +1247,17 @@ pub unsafe extern "C" fn fil_verify_window_post(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_merge_window_post_partition_proofs(
-    registered_proof: fil_RegisteredPoStProof,
-    partition_proofs_ptr: *const fil_PartitionSnarkProof,
+pub unsafe extern "C" fn cess_merge_window_post_partition_proofs(
+    registered_proof: cess_RegisteredPoStProof,
+    partition_proofs_ptr: *const cess_PartitionSnarkProof,
     partition_proofs_len: libc::size_t,
-) -> *mut fil_MergeWindowPoStPartitionProofsResponse {
+) -> *mut cess_MergeWindowPoStPartitionProofsResponse {
     catch_panic_response(|| {
         init_log();
 
         info!("merge_window_post_partition_proofs: start");
 
-        let mut response = fil_MergeWindowPoStPartitionProofsResponse::default();
+        let mut response = cess_MergeWindowPoStPartitionProofsResponse::default();
 
         let partition_proofs: Vec<PartitionSnarkProof> =
             match c_to_rust_partition_proofs(partition_proofs_ptr, partition_proofs_len) {
@@ -1276,7 +1280,7 @@ pub unsafe extern "C" fn fil_merge_window_post_partition_proofs(
 
             match result {
                 Ok(output) => {
-                    let proof = fil_PoStProof {
+                    let proof = cess_PoStProof {
                         registered_proof,
                         proof_ptr: output.as_ptr(),
                         proof_len: output.len(),
@@ -1303,10 +1307,10 @@ pub unsafe extern "C" fn fil_merge_window_post_partition_proofs(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_num_partition_for_fallback_post(
-    registered_proof: fil_RegisteredPoStProof,
+pub unsafe extern "C" fn cess_get_num_partition_for_fallback_post(
+    registered_proof: cess_RegisteredPoStProof,
     num_sectors: libc::size_t,
-) -> *mut fil_GetNumPartitionForFallbackPoStResponse {
+) -> *mut cess_GetNumPartitionForFallbackPoStResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -1316,7 +1320,7 @@ pub unsafe extern "C" fn fil_get_num_partition_for_fallback_post(
             num_sectors,
         );
 
-        let mut response = fil_GetNumPartitionForFallbackPoStResponse::default();
+        let mut response = cess_GetNumPartitionForFallbackPoStResponse::default();
 
         match result {
             Ok(output) => {
@@ -1338,14 +1342,14 @@ pub unsafe extern "C" fn fil_get_num_partition_for_fallback_post(
 /// TODO: document
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_single_window_post_with_vanilla(
-    registered_proof: fil_RegisteredPoStProof,
-    randomness: fil_32ByteArray,
-    prover_id: fil_32ByteArray,
-    vanilla_proofs_ptr: *const fil_VanillaProof,
+pub unsafe extern "C" fn cess_generate_single_window_post_with_vanilla(
+    registered_proof: cess_RegisteredPoStProof,
+    randomness: cess_32ByteArray,
+    prover_id: cess_32ByteArray,
+    vanilla_proofs_ptr: *const cess_VanillaProof,
     vanilla_proofs_len: libc::size_t,
     partition_index: libc::size_t,
-) -> *mut fil_GenerateSingleWindowPoStWithVanillaResponse {
+) -> *mut cess_GenerateSingleWindowPoStWithVanillaResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -1369,11 +1373,11 @@ pub unsafe extern "C" fn fil_generate_single_window_post_with_vanilla(
             partition_index,
         );
 
-        let mut response = fil_GenerateSingleWindowPoStWithVanillaResponse::default();
+        let mut response = cess_GenerateSingleWindowPoStWithVanillaResponse::default();
 
         match result {
             Ok(output) => {
-                let partition_proof = fil_PartitionSnarkProof {
+                let partition_proof = cess_PartitionSnarkProof {
                     registered_proof,
                     proof_ptr: output.0.as_ptr(),
                     proof_len: output.0.len(),
@@ -1412,11 +1416,11 @@ pub unsafe extern "C" fn fil_generate_single_window_post_with_vanilla(
 /// The caller is responsible for closing the passed in file descriptor.
 #[no_mangle]
 #[cfg(not(target_os = "windows"))]
-pub unsafe extern "C" fn fil_generate_piece_commitment(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_generate_piece_commitment(
+    registered_proof: cess_RegisteredSealProof,
     piece_fd_raw: libc::c_int,
     unpadded_piece_size: u64,
-) -> *mut fil_GeneratePieceCommitmentResponse {
+) -> *mut cess_GeneratePieceCommitmentResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -1434,7 +1438,7 @@ pub unsafe extern "C" fn fil_generate_piece_commitment(
         // avoid dropping the File which closes it
         let _ = piece_file.into_raw_fd();
 
-        let mut response = fil_GeneratePieceCommitmentResponse::default();
+        let mut response = cess_GeneratePieceCommitmentResponse::default();
 
         match result {
             Ok(meta) => {
@@ -1454,11 +1458,11 @@ pub unsafe extern "C" fn fil_generate_piece_commitment(
 
 /// Returns the merkle root for a sector containing the provided pieces.
 #[no_mangle]
-pub unsafe extern "C" fn fil_generate_data_commitment(
-    registered_proof: fil_RegisteredSealProof,
-    pieces_ptr: *const fil_PublicPieceInfo,
+pub unsafe extern "C" fn cess_generate_data_commitment(
+    registered_proof: cess_RegisteredSealProof,
+    pieces_ptr: *const cess_PublicPieceInfo,
     pieces_len: libc::size_t,
-) -> *mut fil_GenerateDataCommitmentResponse {
+) -> *mut cess_GenerateDataCommitmentResponse {
     catch_panic_response(|| {
         init_log();
 
@@ -1473,7 +1477,7 @@ pub unsafe extern "C" fn fil_generate_data_commitment(
 
         let result = compute_comm_d(registered_proof.into(), &public_pieces);
 
-        let mut response = fil_GenerateDataCommitmentResponse::default();
+        let mut response = cess_GenerateDataCommitmentResponse::default();
 
         match result {
             Ok(commitment) => {
@@ -1493,16 +1497,16 @@ pub unsafe extern "C" fn fil_generate_data_commitment(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_clear_cache(
+pub unsafe extern "C" fn cess_clear_cache(
     sector_size: u64,
     cache_dir_path: *const libc::c_char,
-) -> *mut fil_ClearCacheResponse {
+) -> *mut cess_ClearCacheResponse {
     catch_panic_response(|| {
         init_log();
 
         let result = clear_cache(sector_size, &c_str_to_pbuf(cache_dir_path));
 
-        let mut response = fil_ClearCacheResponse::default();
+        let mut response = cess_ClearCacheResponse::default();
 
         match result {
             Ok(_) => {
@@ -1519,81 +1523,81 @@ pub unsafe extern "C" fn fil_clear_cache(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_write_with_alignment_response(
-    ptr: *mut fil_WriteWithAlignmentResponse,
+pub unsafe extern "C" fn cess_destroy_write_with_alignment_response(
+    ptr: *mut cess_WriteWithAlignmentResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_write_without_alignment_response(
-    ptr: *mut fil_WriteWithoutAlignmentResponse,
+pub unsafe extern "C" fn cess_destroy_write_without_alignment_response(
+    ptr: *mut cess_WriteWithoutAlignmentResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_fauxrep_response(ptr: *mut fil_FauxRepResponse) {
+pub unsafe extern "C" fn cess_destroy_fauxrep_response(ptr: *mut cess_FauxRepResponse) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_seal_pre_commit_phase1_response(
-    ptr: *mut fil_SealPreCommitPhase1Response,
+pub unsafe extern "C" fn cess_destroy_seal_pre_commit_phase1_response(
+    ptr: *mut cess_SealPreCommitPhase1Response,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_seal_pre_commit_phase2_response(
-    ptr: *mut fil_SealPreCommitPhase2Response,
+pub unsafe extern "C" fn cess_destroy_seal_pre_commit_phase2_response(
+    ptr: *mut cess_SealPreCommitPhase2Response,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_seal_commit_phase1_response(
-    ptr: *mut fil_SealCommitPhase1Response,
+pub unsafe extern "C" fn cess_destroy_seal_commit_phase1_response(
+    ptr: *mut cess_SealCommitPhase1Response,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_seal_commit_phase2_response(
-    ptr: *mut fil_SealCommitPhase2Response,
+pub unsafe extern "C" fn cess_destroy_seal_commit_phase2_response(
+    ptr: *mut cess_SealCommitPhase2Response,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_unseal_range_response(ptr: *mut fil_UnsealRangeResponse) {
+pub unsafe extern "C" fn cess_destroy_unseal_range_response(ptr: *mut cess_UnsealRangeResponse) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_piece_commitment_response(
-    ptr: *mut fil_GeneratePieceCommitmentResponse,
+pub unsafe extern "C" fn cess_destroy_generate_piece_commitment_response(
+    ptr: *mut cess_GeneratePieceCommitmentResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_data_commitment_response(
-    ptr: *mut fil_GenerateDataCommitmentResponse,
+pub unsafe extern "C" fn cess_destroy_generate_data_commitment_response(
+    ptr: *mut cess_GenerateDataCommitmentResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_string_response(ptr: *mut fil_StringResponse) {
+pub unsafe extern "C" fn cess_destroy_string_response(ptr: *mut cess_StringResponse) {
     let _ = Box::from_raw(ptr);
 }
 
 /// Returns the number of user bytes that will fit into a staged sector.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_max_user_bytes_per_staged_sector(
-    registered_proof: fil_RegisteredSealProof,
+pub unsafe extern "C" fn cess_get_max_user_bytes_per_staged_sector(
+    registered_proof: cess_RegisteredSealProof,
 ) -> u64 {
     u64::from(UnpaddedBytesAmount::from(
         RegisteredSealProof::from(registered_proof).sector_size(),
@@ -1603,18 +1607,18 @@ pub unsafe extern "C" fn fil_get_max_user_bytes_per_staged_sector(
 /// Returns the CID of the Groth parameter file for sealing.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_params_cid(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_params_cid(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, RegisteredSealProof::params_cid)
 }
 
 /// Returns the CID of the verifying key-file for verifying a seal proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_verifying_key_cid(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_verifying_key_cid(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, RegisteredSealProof::verifying_key_cid)
 }
 
@@ -1622,9 +1626,9 @@ pub unsafe extern "C" fn fil_get_seal_verifying_key_cid(
 /// parameter file used when sealing.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_params_path(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_params_path(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, |p| {
         p.cache_params_path()
             .map(|pb| String::from(pb.to_string_lossy()))
@@ -1635,9 +1639,9 @@ pub unsafe extern "C" fn fil_get_seal_params_path(
 /// key-file used when verifying a seal proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_verifying_key_path(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_verifying_key_path(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, |p| {
         p.cache_verifying_key_path()
             .map(|pb| String::from(pb.to_string_lossy()))
@@ -1647,36 +1651,36 @@ pub unsafe extern "C" fn fil_get_seal_verifying_key_path(
 /// Returns the identity of the circuit for the provided seal proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_circuit_identifier(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_circuit_identifier(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, RegisteredSealProof::circuit_identifier)
 }
 
 /// Returns the version of the provided seal proof type.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_seal_version(
-    registered_proof: fil_RegisteredSealProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_seal_version(
+    registered_proof: cess_RegisteredSealProof,
+) -> *mut cess_StringResponse {
     registered_seal_proof_accessor(registered_proof, |p| Ok(format!("{:?}", p)))
 }
 
 /// Returns the CID of the Groth parameter file for generating a PoSt.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_params_cid(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_params_cid(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, RegisteredPoStProof::params_cid)
 }
 
 /// Returns the CID of the verifying key-file for verifying a PoSt proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_verifying_key_cid(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_verifying_key_cid(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, RegisteredPoStProof::verifying_key_cid)
 }
 
@@ -1684,9 +1688,9 @@ pub unsafe extern "C" fn fil_get_post_verifying_key_cid(
 /// parameter file used when generating a PoSt.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_params_path(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_params_path(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, |p| {
         p.cache_params_path()
             .map(|pb| String::from(pb.to_string_lossy()))
@@ -1697,9 +1701,9 @@ pub unsafe extern "C" fn fil_get_post_params_path(
 /// key-file used when verifying a PoSt proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_verifying_key_path(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_verifying_key_path(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, |p| {
         p.cache_verifying_key_path()
             .map(|pb| String::from(pb.to_string_lossy()))
@@ -1709,26 +1713,26 @@ pub unsafe extern "C" fn fil_get_post_verifying_key_path(
 /// Returns the identity of the circuit for the provided PoSt proof type.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_circuit_identifier(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_circuit_identifier(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, RegisteredPoStProof::circuit_identifier)
 }
 
 /// Returns the version of the provided seal proof.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_get_post_version(
-    registered_proof: fil_RegisteredPoStProof,
-) -> *mut fil_StringResponse {
+pub unsafe extern "C" fn cess_get_post_version(
+    registered_proof: cess_RegisteredPoStProof,
+) -> *mut cess_StringResponse {
     registered_post_proof_accessor(registered_proof, |p| Ok(format!("{:?}", p)))
 }
 
 unsafe fn registered_seal_proof_accessor(
-    registered_proof: fil_RegisteredSealProof,
+    registered_proof: cess_RegisteredSealProof,
     op: fn(RegisteredSealProof) -> anyhow::Result<String>,
-) -> *mut fil_StringResponse {
-    let mut response = fil_StringResponse::default();
+) -> *mut cess_StringResponse {
+    let mut response = cess_StringResponse::default();
 
     let rsp: RegisteredSealProof = registered_proof.into();
 
@@ -1747,10 +1751,10 @@ unsafe fn registered_seal_proof_accessor(
 }
 
 unsafe fn registered_post_proof_accessor(
-    registered_proof: fil_RegisteredPoStProof,
+    registered_proof: cess_RegisteredPoStProof,
     op: fn(RegisteredPoStProof) -> anyhow::Result<String>,
-) -> *mut fil_StringResponse {
-    let mut response = fil_StringResponse::default();
+) -> *mut cess_StringResponse {
+    let mut response = cess_StringResponse::default();
 
     let rsp: RegisteredPoStProof = registered_proof.into();
 
@@ -1771,22 +1775,22 @@ unsafe fn registered_post_proof_accessor(
 /// Deallocates a VerifySealResponse.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_verify_seal_response(ptr: *mut fil_VerifySealResponse) {
+pub unsafe extern "C" fn cess_destroy_verify_seal_response(ptr: *mut cess_VerifySealResponse) {
     let _ = Box::from_raw(ptr);
 }
 
 /// Deallocates a VerifyAggregateSealProofResponse.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_verify_aggregate_seal_response(
-    ptr: *mut fil_VerifyAggregateSealProofResponse,
+pub unsafe extern "C" fn cess_destroy_verify_aggregate_seal_response(
+    ptr: *mut cess_VerifyAggregateSealProofResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_finalize_ticket_response(
-    ptr: *mut fil_FinalizeTicketResponse,
+pub unsafe extern "C" fn cess_destroy_finalize_ticket_response(
+    ptr: *mut cess_FinalizeTicketResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
@@ -1794,84 +1798,84 @@ pub unsafe extern "C" fn fil_destroy_finalize_ticket_response(
 /// Deallocates a VerifyPoStResponse.
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_verify_winning_post_response(
-    ptr: *mut fil_VerifyWinningPoStResponse,
+pub unsafe extern "C" fn cess_destroy_verify_winning_post_response(
+    ptr: *mut cess_VerifyWinningPoStResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_verify_window_post_response(
-    ptr: *mut fil_VerifyWindowPoStResponse,
+pub unsafe extern "C" fn cess_destroy_verify_window_post_response(
+    ptr: *mut cess_VerifyWindowPoStResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_fallback_sector_challenges_response(
-    ptr: *mut fil_GenerateFallbackSectorChallengesResponse,
+pub unsafe extern "C" fn cess_destroy_generate_fallback_sector_challenges_response(
+    ptr: *mut cess_GenerateFallbackSectorChallengesResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_single_vanilla_proof_response(
-    ptr: *mut fil_GenerateSingleVanillaProofResponse,
+pub unsafe extern "C" fn cess_destroy_generate_single_vanilla_proof_response(
+    ptr: *mut cess_GenerateSingleVanillaProofResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_single_window_post_with_vanilla_response(
-    ptr: *mut fil_GenerateSingleWindowPoStWithVanillaResponse,
+pub unsafe extern "C" fn cess_destroy_generate_single_window_post_with_vanilla_response(
+    ptr: *mut cess_GenerateSingleWindowPoStWithVanillaResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_get_num_partition_for_fallback_post_response(
-    ptr: *mut fil_GetNumPartitionForFallbackPoStResponse,
+pub unsafe extern "C" fn cess_destroy_get_num_partition_for_fallback_post_response(
+    ptr: *mut cess_GetNumPartitionForFallbackPoStResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_merge_window_post_partition_proofs_response(
-    ptr: *mut fil_MergeWindowPoStPartitionProofsResponse,
+pub unsafe extern "C" fn cess_destroy_merge_window_post_partition_proofs_response(
+    ptr: *mut cess_MergeWindowPoStPartitionProofsResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_winning_post_response(
-    ptr: *mut fil_GenerateWinningPoStResponse,
+pub unsafe extern "C" fn cess_destroy_generate_winning_post_response(
+    ptr: *mut cess_GenerateWinningPoStResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_window_post_response(
-    ptr: *mut fil_GenerateWindowPoStResponse,
+pub unsafe extern "C" fn cess_destroy_generate_window_post_response(
+    ptr: *mut cess_GenerateWindowPoStResponse,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_generate_winning_post_sector_challenge(
-    ptr: *mut fil_GenerateWinningPoStSectorChallenge,
+pub unsafe extern "C" fn cess_destroy_generate_winning_post_sector_challenge(
+    ptr: *mut cess_GenerateWinningPoStSectorChallenge,
 ) {
     let _ = Box::from_raw(ptr);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_clear_cache_response(ptr: *mut fil_ClearCacheResponse) {
+pub unsafe extern "C" fn cess_destroy_clear_cache_response(ptr: *mut cess_ClearCacheResponse) {
     let _ = Box::from_raw(ptr);
 }
 
 /// Deallocates a AggregateProof
 ///
 #[no_mangle]
-pub unsafe extern "C" fn fil_destroy_aggregate_proof(ptr: *mut fil_AggregateProof) {
+pub unsafe extern "C" fn cess_destroy_aggregate_proof(ptr: *mut cess_AggregateProof) {
     let _ = Box::from_raw(ptr);
 }
 
@@ -1890,7 +1894,7 @@ pub mod tests {
 
     #[test]
     fn test_write_with_and_without_alignment() -> Result<()> {
-        let registered_proof = fil_RegisteredSealProof::StackedDrg2KiBV1;
+        let registered_proof = cess_RegisteredSealProof::StackedDrg2KiBV1;
 
         // write some bytes to a temp file to be used as the byte source
         let mut rng = thread_rng();
@@ -1917,7 +1921,7 @@ pub mod tests {
 
         // write the first file
         unsafe {
-            let resp = fil_write_without_alignment(registered_proof, src_fd_a, 127, dst_fd);
+            let resp = cess_write_without_alignment(registered_proof, src_fd_a, 127, dst_fd);
 
             if (*resp).status_code != FCPResponseStatus::FCPNoError {
                 let msg = c_str_to_rust_str((*resp).error_msg);
@@ -1935,7 +1939,7 @@ pub mod tests {
         unsafe {
             let existing = vec![127u64];
 
-            let resp = fil_write_with_alignment(
+            let resp = cess_write_with_alignment(
                 registered_proof,
                 src_fd_b,
                 508,
@@ -1962,70 +1966,70 @@ pub mod tests {
     #[test]
     fn test_proof_types() {
         let seal_types = vec![
-            fil_RegisteredSealProof::StackedDrg2KiBV1,
-            fil_RegisteredSealProof::StackedDrg8MiBV1,
-            fil_RegisteredSealProof::StackedDrg512MiBV1,
-            fil_RegisteredSealProof::StackedDrg32GiBV1,
-            fil_RegisteredSealProof::StackedDrg64GiBV1,
-            fil_RegisteredSealProof::StackedDrg2KiBV1_1,
-            fil_RegisteredSealProof::StackedDrg8MiBV1_1,
-            fil_RegisteredSealProof::StackedDrg512MiBV1_1,
-            fil_RegisteredSealProof::StackedDrg32GiBV1_1,
-            fil_RegisteredSealProof::StackedDrg64GiBV1_1,
+            cess_RegisteredSealProof::StackedDrg2KiBV1,
+            cess_RegisteredSealProof::StackedDrg8MiBV1,
+            cess_RegisteredSealProof::StackedDrg512MiBV1,
+            cess_RegisteredSealProof::StackedDrg32GiBV1,
+            cess_RegisteredSealProof::StackedDrg64GiBV1,
+            cess_RegisteredSealProof::StackedDrg2KiBV1_1,
+            cess_RegisteredSealProof::StackedDrg8MiBV1_1,
+            cess_RegisteredSealProof::StackedDrg512MiBV1_1,
+            cess_RegisteredSealProof::StackedDrg32GiBV1_1,
+            cess_RegisteredSealProof::StackedDrg64GiBV1_1,
         ];
 
         let post_types = vec![
-            fil_RegisteredPoStProof::StackedDrgWinning2KiBV1,
-            fil_RegisteredPoStProof::StackedDrgWinning8MiBV1,
-            fil_RegisteredPoStProof::StackedDrgWinning512MiBV1,
-            fil_RegisteredPoStProof::StackedDrgWinning32GiBV1,
-            fil_RegisteredPoStProof::StackedDrgWinning64GiBV1,
-            fil_RegisteredPoStProof::StackedDrgWindow2KiBV1,
-            fil_RegisteredPoStProof::StackedDrgWindow8MiBV1,
-            fil_RegisteredPoStProof::StackedDrgWindow512MiBV1,
-            fil_RegisteredPoStProof::StackedDrgWindow32GiBV1,
-            fil_RegisteredPoStProof::StackedDrgWindow64GiBV1,
+            cess_RegisteredPoStProof::StackedDrgWinning2KiBV1,
+            cess_RegisteredPoStProof::StackedDrgWinning8MiBV1,
+            cess_RegisteredPoStProof::StackedDrgWinning512MiBV1,
+            cess_RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            cess_RegisteredPoStProof::StackedDrgWinning64GiBV1,
+            cess_RegisteredPoStProof::StackedDrgWindow2KiBV1,
+            cess_RegisteredPoStProof::StackedDrgWindow8MiBV1,
+            cess_RegisteredPoStProof::StackedDrgWindow512MiBV1,
+            cess_RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            cess_RegisteredPoStProof::StackedDrgWindow64GiBV1,
         ];
 
         let num_ops = (seal_types.len() + post_types.len()) * 6;
 
-        let mut pairs: Vec<(&str, *mut fil_StringResponse)> = Vec::with_capacity(num_ops);
+        let mut pairs: Vec<(&str, *mut cess_StringResponse)> = Vec::with_capacity(num_ops);
 
         unsafe {
             for st in seal_types {
-                pairs.push(("get_seal_params_cid", fil_get_seal_params_cid(st)));
+                pairs.push(("get_seal_params_cid", cess_get_seal_params_cid(st)));
                 pairs.push((
                     "get_seal_verify_key_cid",
-                    fil_get_seal_verifying_key_cid(st),
+                    cess_get_seal_verifying_key_cid(st),
                 ));
-                pairs.push(("get_seal_verify_key_cid", fil_get_seal_params_path(st)));
+                pairs.push(("get_seal_verify_key_cid", cess_get_seal_params_path(st)));
                 pairs.push((
                     "get_seal_verify_key_cid",
-                    fil_get_seal_verifying_key_path(st),
+                    cess_get_seal_verifying_key_path(st),
                 ));
                 pairs.push((
                     "get_seal_circuit_identifier",
-                    fil_get_seal_circuit_identifier(st),
+                    cess_get_seal_circuit_identifier(st),
                 ));
-                pairs.push(("get_seal_version", fil_get_seal_version(st)));
+                pairs.push(("get_seal_version", cess_get_seal_version(st)));
             }
 
             for pt in post_types {
-                pairs.push(("get_post_params_cid", fil_get_post_params_cid(pt)));
+                pairs.push(("get_post_params_cid", cess_get_post_params_cid(pt)));
                 pairs.push((
                     "get_post_verify_key_cid",
-                    fil_get_post_verifying_key_cid(pt),
+                    cess_get_post_verifying_key_cid(pt),
                 ));
-                pairs.push(("get_post_params_path", fil_get_post_params_path(pt)));
+                pairs.push(("get_post_params_path", cess_get_post_params_path(pt)));
                 pairs.push((
                     "get_post_verifying_key_path",
-                    fil_get_post_verifying_key_path(pt),
+                    cess_get_post_verifying_key_path(pt),
                 ));
                 pairs.push((
                     "get_post_circuit_identifier",
-                    fil_get_post_circuit_identifier(pt),
+                    cess_get_post_circuit_identifier(pt),
                 ));
-                pairs.push(("get_post_version", fil_get_post_version(pt)));
+                pairs.push(("get_post_version", cess_get_post_version(pt)));
             }
         }
 
@@ -2044,7 +2048,7 @@ pub mod tests {
 
                 assert!(!y.is_empty());
 
-                fil_destroy_string_response(r);
+                cess_destroy_string_response(r);
             }
         }
     }
@@ -2052,31 +2056,31 @@ pub mod tests {
     #[test]
     #[allow(clippy::cognitive_complexity)]
     fn test_sealing_v1() -> Result<()> {
-        test_sealing_inner(fil_RegisteredSealProof::StackedDrg2KiBV1)
+        test_sealing_inner(cess_RegisteredSealProof::StackedDrg2KiBV1)
     }
 
     #[test]
     #[allow(clippy::cognitive_complexity)]
     fn test_sealing_v1_1() -> Result<()> {
-        test_sealing_inner(fil_RegisteredSealProof::StackedDrg2KiBV1_1)
+        test_sealing_inner(cess_RegisteredSealProof::StackedDrg2KiBV1_1)
     }
 
-    fn test_sealing_inner(registered_proof_seal: fil_RegisteredSealProof) -> Result<()> {
-        let wrap = |x| fil_32ByteArray { inner: x };
+    fn test_sealing_inner(registered_proof_seal: cess_RegisteredSealProof) -> Result<()> {
+        let wrap = |x| cess_32ByteArray { inner: x };
 
         // miscellaneous setup and shared values
-        let registered_proof_winning_post = fil_RegisteredPoStProof::StackedDrgWinning2KiBV1;
-        let registered_proof_window_post = fil_RegisteredPoStProof::StackedDrgWindow2KiBV1;
+        let registered_proof_winning_post = cess_RegisteredPoStProof::StackedDrgWinning2KiBV1;
+        let registered_proof_window_post = cess_RegisteredPoStProof::StackedDrgWindow2KiBV1;
 
         let cache_dir = tempfile::tempdir()?;
         let cache_dir_path = cache_dir.into_path();
 
-        let prover_id = fil_32ByteArray { inner: [1u8; 32] };
-        let randomness = fil_32ByteArray { inner: [7u8; 32] };
+        let prover_id = cess_32ByteArray { inner: [1u8; 32] };
+        let randomness = cess_32ByteArray { inner: [7u8; 32] };
         let sector_id = 42;
         let sector_id2 = 43;
-        let seed = fil_32ByteArray { inner: [5u8; 32] };
-        let ticket = fil_32ByteArray { inner: [6u8; 32] };
+        let seed = cess_32ByteArray { inner: [5u8; 32] };
+        let ticket = cess_32ByteArray { inner: [6u8; 32] };
 
         // create a byte source (a user's piece)
         let mut rng = thread_rng();
@@ -2105,7 +2109,7 @@ pub mod tests {
         let staged_sector_fd = staged_file.into_raw_fd();
 
         unsafe {
-            let resp_a1 = fil_write_without_alignment(
+            let resp_a1 = cess_write_without_alignment(
                 registered_proof_seal,
                 piece_file_a_fd,
                 127,
@@ -2119,7 +2123,7 @@ pub mod tests {
 
             let existing_piece_sizes = vec![127];
 
-            let resp_a2 = fil_write_with_alignment(
+            let resp_a2 = cess_write_with_alignment(
                 registered_proof_seal,
                 piece_file_b_fd,
                 1016,
@@ -2134,18 +2138,18 @@ pub mod tests {
             }
 
             let pieces = vec![
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 127,
                     comm_p: (*resp_a1).comm_p,
                 },
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 1016,
                     comm_p: (*resp_a2).comm_p,
                 },
             ];
 
             let resp_x =
-                fil_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
+                cess_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
 
             if (*resp_x).status_code != FCPResponseStatus::FCPNoError {
                 let msg = c_str_to_rust_str((*resp_x).error_msg);
@@ -2157,7 +2161,7 @@ pub mod tests {
             let replica_path_c_str = rust_str_to_c_str(sealed_path.to_str().unwrap());
             let unseal_path_c_str = rust_str_to_c_str(unseal_path.to_str().unwrap());
 
-            let resp_b1 = fil_seal_pre_commit_phase1(
+            let resp_b1 = cess_seal_pre_commit_phase1(
                 registered_proof_seal,
                 cache_dir_path_c_str,
                 staged_path_c_str,
@@ -2174,7 +2178,7 @@ pub mod tests {
                 panic!("seal_pre_commit_phase1 failed: {:?}", msg);
             }
 
-            let resp_b2 = fil_seal_pre_commit_phase2(
+            let resp_b2 = cess_seal_pre_commit_phase2(
                 (*resp_b1).seal_pre_commit_phase1_output_ptr,
                 (*resp_b1).seal_pre_commit_phase1_output_len,
                 cache_dir_path_c_str,
@@ -2195,7 +2199,7 @@ pub mod tests {
                 "pre-computed CommD and pre-commit CommD don't match"
             );
 
-            let resp_c1 = fil_seal_commit_phase1(
+            let resp_c1 = cess_seal_commit_phase1(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -2214,7 +2218,7 @@ pub mod tests {
                 panic!("seal_commit_phase1 failed: {:?}", msg);
             }
 
-            let resp_c2 = fil_seal_commit_phase2(
+            let resp_c2 = cess_seal_commit_phase2(
                 (*resp_c1).seal_commit_phase1_output_ptr,
                 (*resp_c1).seal_commit_phase1_output_len,
                 sector_id,
@@ -2226,7 +2230,7 @@ pub mod tests {
                 panic!("seal_commit_phase2 failed: {:?}", msg);
             }
 
-            let resp_d = fil_verify_seal(
+            let resp_d = cess_verify_seal(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -2245,7 +2249,7 @@ pub mod tests {
 
             assert!((*resp_d).is_valid, "proof was not valid");
 
-            let resp_c22 = fil_seal_commit_phase2(
+            let resp_c22 = cess_seal_commit_phase2(
                 (*resp_c1).seal_commit_phase1_output_ptr,
                 (*resp_c1).seal_commit_phase1_output_len,
                 sector_id,
@@ -2257,7 +2261,7 @@ pub mod tests {
                 panic!("seal_commit_phase2 failed: {:?}", msg);
             }
 
-            let resp_d2 = fil_verify_seal(
+            let resp_d2 = cess_verify_seal(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -2276,7 +2280,7 @@ pub mod tests {
 
             assert!((*resp_d2).is_valid, "proof was not valid");
 
-            let resp_e = fil_unseal_range(
+            let resp_e = cess_unseal_range(
                 registered_proof_seal,
                 cache_dir_path_c_str,
                 sealed_file.into_raw_fd(),
@@ -2322,7 +2326,7 @@ pub mod tests {
             // generate a PoSt
 
             let sectors = vec![sector_id];
-            let resp_f = fil_generate_winning_post_sector_challenge(
+            let resp_f = cess_generate_winning_post_sector_challenge(
                 registered_proof_winning_post,
                 randomness,
                 sectors.len() as u64,
@@ -2342,7 +2346,7 @@ pub mod tests {
                 panic!("generate_candidates produced no results");
             }
 
-            let private_replicas = vec![fil_PrivateReplicaInfo {
+            let private_replicas = vec![cess_PrivateReplicaInfo {
                 registered_proof: registered_proof_winning_post,
                 cache_dir_path: cache_dir_path_c_str,
                 comm_r: (*resp_b2).comm_r,
@@ -2352,7 +2356,7 @@ pub mod tests {
 
             // winning post
 
-            let resp_h = fil_generate_winning_post(
+            let resp_h = cess_generate_winning_post(
                 randomness,
                 private_replicas.as_ptr(),
                 private_replicas.len(),
@@ -2363,13 +2367,13 @@ pub mod tests {
                 let msg = c_str_to_rust_str((*resp_h).error_msg);
                 panic!("generate_winning_post failed: {:?}", msg);
             }
-            let public_replicas = vec![fil_PublicReplicaInfo {
+            let public_replicas = vec![cess_PublicReplicaInfo {
                 registered_proof: registered_proof_winning_post,
                 sector_id,
                 comm_r: (*resp_b2).comm_r,
             }];
 
-            let resp_i = fil_verify_winning_post(
+            let resp_i = cess_verify_winning_post(
                 randomness,
                 public_replicas.as_ptr(),
                 public_replicas.len(),
@@ -2397,7 +2401,7 @@ pub mod tests {
             //////////////////////////////////////////////
 
             // First generate sector challenges.
-            let resp_sc = fil_generate_fallback_sector_challenges(
+            let resp_sc = cess_generate_fallback_sector_challenges(
                 registered_proof_winning_post,
                 randomness,
                 sectors.as_ptr(),
@@ -2423,7 +2427,7 @@ pub mod tests {
                 "Challenge iterations must match the number of sector ids"
             );
 
-            let mut vanilla_proofs: Vec<fil_VanillaProof> = Vec::with_capacity(sector_ids.len());
+            let mut vanilla_proofs: Vec<cess_VanillaProof> = Vec::with_capacity(sector_ids.len());
 
             // Gather up all vanilla proofs.
             for i in 0..challenge_iterations {
@@ -2437,7 +2441,7 @@ pub mod tests {
                     .expect("failed to find private replica info")
                     .clone();
 
-                let resp_vp = fil_generate_single_vanilla_proof(
+                let resp_vp = cess_generate_single_vanilla_proof(
                     private_replica,
                     challenges.as_ptr(),
                     challenges.len(),
@@ -2449,10 +2453,10 @@ pub mod tests {
                 }
 
                 vanilla_proofs.push((*resp_vp).vanilla_proof.clone());
-                fil_destroy_generate_single_vanilla_proof_response(resp_vp);
+                cess_destroy_generate_single_vanilla_proof_response(resp_vp);
             }
 
-            let resp_wpwv = fil_generate_winning_post_with_vanilla(
+            let resp_wpwv = cess_generate_winning_post_with_vanilla(
                 registered_proof_winning_post,
                 randomness,
                 prover_id,
@@ -2467,7 +2471,7 @@ pub mod tests {
 
             // Verify the second winning post (generated by the
             // distributed post API)
-            let resp_di = fil_verify_winning_post(
+            let resp_di = cess_verify_winning_post(
                 randomness,
                 public_replicas.as_ptr(),
                 public_replicas.len(),
@@ -2487,7 +2491,7 @@ pub mod tests {
 
             // window post
 
-            let private_replicas = vec![fil_PrivateReplicaInfo {
+            let private_replicas = vec![cess_PrivateReplicaInfo {
                 registered_proof: registered_proof_window_post,
                 cache_dir_path: cache_dir_path_c_str,
                 comm_r: (*resp_b2).comm_r,
@@ -2495,7 +2499,7 @@ pub mod tests {
                 sector_id,
             }];
 
-            let resp_j = fil_generate_window_post(
+            let resp_j = cess_generate_window_post(
                 randomness,
                 private_replicas.as_ptr(),
                 private_replicas.len(),
@@ -2507,13 +2511,13 @@ pub mod tests {
                 panic!("generate_window_post failed: {:?}", msg);
             }
 
-            let public_replicas = vec![fil_PublicReplicaInfo {
+            let public_replicas = vec![cess_PublicReplicaInfo {
                 registered_proof: registered_proof_window_post,
                 sector_id,
                 comm_r: (*resp_b2).comm_r,
             }];
 
-            let resp_k = fil_verify_window_post(
+            let resp_k = cess_verify_window_post(
                 randomness,
                 public_replicas.as_ptr(),
                 public_replicas.len(),
@@ -2542,14 +2546,14 @@ pub mod tests {
 
             let sectors = vec![sector_id, sector_id2];
             let private_replicas = vec![
-                fil_PrivateReplicaInfo {
+                cess_PrivateReplicaInfo {
                     registered_proof: registered_proof_window_post,
                     cache_dir_path: cache_dir_path_c_str,
                     comm_r: (*resp_b2).comm_r,
                     replica_path: replica_path_c_str,
                     sector_id,
                 },
-                fil_PrivateReplicaInfo {
+                cess_PrivateReplicaInfo {
                     registered_proof: registered_proof_window_post,
                     cache_dir_path: cache_dir_path_c_str,
                     comm_r: (*resp_b2).comm_r,
@@ -2558,12 +2562,12 @@ pub mod tests {
                 },
             ];
             let public_replicas = vec![
-                fil_PublicReplicaInfo {
+                cess_PublicReplicaInfo {
                     registered_proof: registered_proof_window_post,
                     sector_id,
                     comm_r: (*resp_b2).comm_r,
                 },
-                fil_PublicReplicaInfo {
+                cess_PublicReplicaInfo {
                     registered_proof: registered_proof_window_post,
                     sector_id: sector_id2,
                     comm_r: (*resp_b2).comm_r,
@@ -2571,7 +2575,7 @@ pub mod tests {
             ];
 
             // Generate sector challenges.
-            let resp_sc2 = fil_generate_fallback_sector_challenges(
+            let resp_sc2 = cess_generate_fallback_sector_challenges(
                 registered_proof_window_post,
                 randomness,
                 sectors.as_ptr(),
@@ -2597,7 +2601,7 @@ pub mod tests {
                 "Challenge iterations must match the number of sector ids"
             );
 
-            let mut vanilla_proofs: Vec<fil_VanillaProof> = Vec::with_capacity(sector_ids.len());
+            let mut vanilla_proofs: Vec<cess_VanillaProof> = Vec::with_capacity(sector_ids.len());
 
             // Gather up all vanilla proofs.
             for i in 0..challenge_iterations {
@@ -2612,7 +2616,7 @@ pub mod tests {
                     .expect("failed to find private replica info")
                     .clone();
 
-                let resp_vp = fil_generate_single_vanilla_proof(
+                let resp_vp = cess_generate_single_vanilla_proof(
                     private_replica,
                     challenges.as_ptr(),
                     challenges.len(),
@@ -2624,10 +2628,10 @@ pub mod tests {
                 }
 
                 vanilla_proofs.push((*resp_vp).vanilla_proof.clone());
-                fil_destroy_generate_single_vanilla_proof_response(resp_vp);
+                cess_destroy_generate_single_vanilla_proof_response(resp_vp);
             }
 
-            let resp_wpwv2 = fil_generate_window_post_with_vanilla(
+            let resp_wpwv2 = cess_generate_window_post_with_vanilla(
                 registered_proof_window_post,
                 randomness,
                 prover_id,
@@ -2640,7 +2644,7 @@ pub mod tests {
                 panic!("generate_window_post_with_vanilla failed: {:?}", msg);
             }
 
-            let resp_k2 = fil_verify_window_post(
+            let resp_k2 = cess_verify_window_post(
                 randomness,
                 public_replicas.as_ptr(),
                 public_replicas.len(),
@@ -2670,7 +2674,7 @@ pub mod tests {
             // Note: Re-using all of the sector challenges and types
             // required from above previous distributed PoSt API run.
 
-            let num_partitions_resp = fil_get_num_partition_for_fallback_post(
+            let num_partitions_resp = cess_get_num_partition_for_fallback_post(
                 registered_proof_window_post,
                 sectors.len(),
             );
@@ -2679,7 +2683,7 @@ pub mod tests {
                 panic!("get_num_partition_for_fallback_post failed: {:?}", msg);
             }
 
-            let mut partition_proofs: Vec<fil_PartitionSnarkProof> =
+            let mut partition_proofs: Vec<cess_PartitionSnarkProof> =
                 Vec::with_capacity((*num_partitions_resp).num_partition);
             for partition_index in 0..(*num_partitions_resp).num_partition {
                 let mut vanilla_proofs = Vec::with_capacity(challenge_iterations);
@@ -2695,7 +2699,7 @@ pub mod tests {
                         .expect("failed to find private replica info")
                         .clone();
 
-                    let resp_vp = fil_generate_single_vanilla_proof(
+                    let resp_vp = cess_generate_single_vanilla_proof(
                         private_replica,
                         challenges.as_ptr(),
                         challenges.len(),
@@ -2707,10 +2711,10 @@ pub mod tests {
                     }
 
                     vanilla_proofs.push((*resp_vp).vanilla_proof.clone());
-                    fil_destroy_generate_single_vanilla_proof_response(resp_vp);
+                    cess_destroy_generate_single_vanilla_proof_response(resp_vp);
                 }
 
-                let single_partition_proof_resp = fil_generate_single_window_post_with_vanilla(
+                let single_partition_proof_resp = cess_generate_single_window_post_with_vanilla(
                     registered_proof_window_post,
                     randomness,
                     prover_id,
@@ -2725,14 +2729,14 @@ pub mod tests {
                 }
 
                 partition_proofs.push((*single_partition_proof_resp).partition_proof.clone());
-                fil_destroy_generate_single_window_post_with_vanilla_response(
+                cess_destroy_generate_single_window_post_with_vanilla_response(
                     single_partition_proof_resp,
                 );
             }
 
-            fil_destroy_get_num_partition_for_fallback_post_response(num_partitions_resp);
+            cess_destroy_get_num_partition_for_fallback_post_response(num_partitions_resp);
 
-            let merged_proof_resp = fil_merge_window_post_partition_proofs(
+            let merged_proof_resp = cess_merge_window_post_partition_proofs(
                 registered_proof_window_post,
                 partition_proofs.as_ptr(),
                 partition_proofs.len(),
@@ -2743,7 +2747,7 @@ pub mod tests {
                 panic!("merge_window_post_partition_proofs failed: {:?}", msg);
             }
 
-            let resp_k3 = fil_verify_window_post(
+            let resp_k3 = cess_verify_window_post(
                 randomness,
                 public_replicas.as_ptr(),
                 public_replicas.len(),
@@ -2761,37 +2765,37 @@ pub mod tests {
                 panic!("verify_window_post rejected the provided proof as invalid");
             }
 
-            fil_destroy_merge_window_post_partition_proofs_response(merged_proof_resp);
+            cess_destroy_merge_window_post_partition_proofs_response(merged_proof_resp);
 
             ////////////////////
             // Cleanup responses
             ////////////////////
 
-            fil_destroy_write_without_alignment_response(resp_a1);
-            fil_destroy_write_with_alignment_response(resp_a2);
-            fil_destroy_generate_data_commitment_response(resp_x);
+            cess_destroy_write_without_alignment_response(resp_a1);
+            cess_destroy_write_with_alignment_response(resp_a2);
+            cess_destroy_generate_data_commitment_response(resp_x);
 
-            fil_destroy_seal_pre_commit_phase1_response(resp_b1);
-            fil_destroy_seal_pre_commit_phase2_response(resp_b2);
-            fil_destroy_seal_commit_phase1_response(resp_c1);
-            fil_destroy_seal_commit_phase2_response(resp_c2);
+            cess_destroy_seal_pre_commit_phase1_response(resp_b1);
+            cess_destroy_seal_pre_commit_phase2_response(resp_b2);
+            cess_destroy_seal_commit_phase1_response(resp_c1);
+            cess_destroy_seal_commit_phase2_response(resp_c2);
 
-            fil_destroy_verify_seal_response(resp_d);
-            fil_destroy_unseal_range_response(resp_e);
+            cess_destroy_verify_seal_response(resp_d);
+            cess_destroy_unseal_range_response(resp_e);
 
-            fil_destroy_generate_winning_post_sector_challenge(resp_f);
-            fil_destroy_generate_fallback_sector_challenges_response(resp_sc);
-            fil_destroy_generate_winning_post_response(resp_h);
-            fil_destroy_generate_winning_post_response(resp_wpwv);
-            fil_destroy_verify_winning_post_response(resp_i);
-            fil_destroy_verify_winning_post_response(resp_di);
+            cess_destroy_generate_winning_post_sector_challenge(resp_f);
+            cess_destroy_generate_fallback_sector_challenges_response(resp_sc);
+            cess_destroy_generate_winning_post_response(resp_h);
+            cess_destroy_generate_winning_post_response(resp_wpwv);
+            cess_destroy_verify_winning_post_response(resp_i);
+            cess_destroy_verify_winning_post_response(resp_di);
 
-            fil_destroy_generate_fallback_sector_challenges_response(resp_sc2);
-            fil_destroy_generate_window_post_response(resp_j);
-            fil_destroy_generate_window_post_response(resp_wpwv2);
-            fil_destroy_verify_window_post_response(resp_k);
-            fil_destroy_verify_window_post_response(resp_k2);
-            fil_destroy_verify_window_post_response(resp_k3);
+            cess_destroy_generate_fallback_sector_challenges_response(resp_sc2);
+            cess_destroy_generate_window_post_response(resp_j);
+            cess_destroy_generate_window_post_response(resp_wpwv2);
+            cess_destroy_verify_window_post_response(resp_k);
+            cess_destroy_verify_window_post_response(resp_k2);
+            cess_destroy_verify_window_post_response(resp_k3);
 
             c_str_to_rust_str(cache_dir_path_c_str);
             c_str_to_rust_str(staged_path_c_str);
@@ -2817,25 +2821,25 @@ pub mod tests {
 
     #[test]
     fn test_faulty_sectors_v1() -> Result<()> {
-        test_faulty_sectors_inner(fil_RegisteredSealProof::StackedDrg2KiBV1)
+        test_faulty_sectors_inner(cess_RegisteredSealProof::StackedDrg2KiBV1)
     }
 
     #[test]
     fn test_faulty_sectors_v1_1() -> Result<()> {
-        test_faulty_sectors_inner(fil_RegisteredSealProof::StackedDrg2KiBV1_1)
+        test_faulty_sectors_inner(cess_RegisteredSealProof::StackedDrg2KiBV1_1)
     }
 
-    fn test_faulty_sectors_inner(registered_proof_seal: fil_RegisteredSealProof) -> Result<()> {
+    fn test_faulty_sectors_inner(registered_proof_seal: cess_RegisteredSealProof) -> Result<()> {
         // miscellaneous setup and shared values
-        let registered_proof_window_post = fil_RegisteredPoStProof::StackedDrgWindow2KiBV1;
+        let registered_proof_window_post = cess_RegisteredPoStProof::StackedDrgWindow2KiBV1;
 
         let cache_dir = tempfile::tempdir()?;
         let cache_dir_path = cache_dir.into_path();
 
-        let prover_id = fil_32ByteArray { inner: [1u8; 32] };
-        let randomness = fil_32ByteArray { inner: [7u8; 32] };
+        let prover_id = cess_32ByteArray { inner: [1u8; 32] };
+        let randomness = cess_32ByteArray { inner: [7u8; 32] };
         let sector_id = 42;
-        let ticket = fil_32ByteArray { inner: [6u8; 32] };
+        let ticket = cess_32ByteArray { inner: [6u8; 32] };
 
         // create a byte source (a user's piece)
         let mut rng = thread_rng();
@@ -2861,7 +2865,7 @@ pub mod tests {
         let staged_sector_fd = staged_file.into_raw_fd();
 
         unsafe {
-            let resp_a1 = fil_write_without_alignment(
+            let resp_a1 = cess_write_without_alignment(
                 registered_proof_seal,
                 piece_file_a_fd,
                 127,
@@ -2875,7 +2879,7 @@ pub mod tests {
 
             let existing_piece_sizes = vec![127];
 
-            let resp_a2 = fil_write_with_alignment(
+            let resp_a2 = cess_write_with_alignment(
                 registered_proof_seal,
                 piece_file_b_fd,
                 1016,
@@ -2890,18 +2894,18 @@ pub mod tests {
             }
 
             let pieces = vec![
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 127,
                     comm_p: (*resp_a1).comm_p,
                 },
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 1016,
                     comm_p: (*resp_a2).comm_p,
                 },
             ];
 
             let resp_x =
-                fil_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
+                cess_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
 
             if (*resp_x).status_code != FCPResponseStatus::FCPNoError {
                 let msg = c_str_to_rust_str((*resp_x).error_msg);
@@ -2912,7 +2916,7 @@ pub mod tests {
             let staged_path_c_str = rust_str_to_c_str(staged_path.to_str().unwrap());
             let replica_path_c_str = rust_str_to_c_str(sealed_path.to_str().unwrap());
 
-            let resp_b1 = fil_seal_pre_commit_phase1(
+            let resp_b1 = cess_seal_pre_commit_phase1(
                 registered_proof_seal,
                 cache_dir_path_c_str,
                 staged_path_c_str,
@@ -2929,7 +2933,7 @@ pub mod tests {
                 panic!("seal_pre_commit_phase1 failed: {:?}", msg);
             }
 
-            let resp_b2 = fil_seal_pre_commit_phase2(
+            let resp_b2 = cess_seal_pre_commit_phase2(
                 (*resp_b1).seal_pre_commit_phase1_output_ptr,
                 (*resp_b1).seal_pre_commit_phase1_output_len,
                 cache_dir_path_c_str,
@@ -2947,7 +2951,7 @@ pub mod tests {
             let faulty_replica_path_c_str =
                 rust_str_to_c_str(faulty_sealed_file.path().to_str().unwrap());
 
-            let private_replicas = vec![fil_PrivateReplicaInfo {
+            let private_replicas = vec![cess_PrivateReplicaInfo {
                 registered_proof: registered_proof_window_post,
                 cache_dir_path: cache_dir_path_c_str,
                 comm_r: (*resp_b2).comm_r,
@@ -2955,7 +2959,7 @@ pub mod tests {
                 sector_id,
             }];
 
-            let resp_j = fil_generate_window_post(
+            let resp_j = cess_generate_window_post(
                 randomness,
                 private_replicas.as_ptr(),
                 private_replicas.len(),
@@ -2974,13 +2978,13 @@ pub mod tests {
             );
             assert_eq!(faulty_sectors, &[42], "sector 42 should be faulty");
 
-            fil_destroy_write_without_alignment_response(resp_a1);
-            fil_destroy_write_with_alignment_response(resp_a2);
+            cess_destroy_write_without_alignment_response(resp_a1);
+            cess_destroy_write_with_alignment_response(resp_a2);
 
-            fil_destroy_seal_pre_commit_phase1_response(resp_b1);
-            fil_destroy_seal_pre_commit_phase2_response(resp_b2);
+            cess_destroy_seal_pre_commit_phase1_response(resp_b1);
+            cess_destroy_seal_pre_commit_phase2_response(resp_b2);
 
-            fil_destroy_generate_window_post_response(resp_j);
+            cess_destroy_generate_window_post_response(resp_j);
 
             c_str_to_rust_str(cache_dir_path_c_str);
             c_str_to_rust_str(staged_path_c_str);
@@ -3003,8 +3007,8 @@ pub mod tests {
     #[ignore]
     fn test_sealing_aggregation_v1() -> Result<()> {
         test_sealing_aggregation(
-            fil_RegisteredSealProof::StackedDrg2KiBV1,
-            fil_RegisteredAggregationProof::SnarkPackV1,
+            cess_RegisteredSealProof::StackedDrg2KiBV1,
+            cess_RegisteredAggregationProof::SnarkPackV1,
         )
     }
 
@@ -3012,25 +3016,25 @@ pub mod tests {
     #[ignore]
     fn test_sealing_aggregation_v1_1() -> Result<()> {
         test_sealing_aggregation(
-            fil_RegisteredSealProof::StackedDrg2KiBV1_1,
-            fil_RegisteredAggregationProof::SnarkPackV1,
+            cess_RegisteredSealProof::StackedDrg2KiBV1_1,
+            cess_RegisteredAggregationProof::SnarkPackV1,
         )
     }
 
     fn test_sealing_aggregation(
-        registered_proof_seal: fil_RegisteredSealProof,
-        registered_aggregation: fil_RegisteredAggregationProof,
+        registered_proof_seal: cess_RegisteredSealProof,
+        registered_aggregation: cess_RegisteredAggregationProof,
     ) -> Result<()> {
-        let wrap = |x| fil_32ByteArray { inner: x };
+        let wrap = |x| cess_32ByteArray { inner: x };
 
         // miscellaneous setup and shared values
         let cache_dir = tempfile::tempdir()?;
         let cache_dir_path = cache_dir.into_path();
 
-        let prover_id = fil_32ByteArray { inner: [1u8; 32] };
+        let prover_id = cess_32ByteArray { inner: [1u8; 32] };
         let sector_id = 42;
-        let seed = fil_32ByteArray { inner: [5u8; 32] };
-        let ticket = fil_32ByteArray { inner: [6u8; 32] };
+        let seed = cess_32ByteArray { inner: [5u8; 32] };
+        let ticket = cess_32ByteArray { inner: [6u8; 32] };
 
         // create a byte source (a user's piece)
         let mut rng = thread_rng();
@@ -3056,7 +3060,7 @@ pub mod tests {
         let staged_sector_fd = staged_file.into_raw_fd();
 
         unsafe {
-            let resp_a1 = fil_write_without_alignment(
+            let resp_a1 = cess_write_without_alignment(
                 registered_proof_seal,
                 piece_file_a_fd,
                 127,
@@ -3070,7 +3074,7 @@ pub mod tests {
 
             let existing_piece_sizes = vec![127];
 
-            let resp_a2 = fil_write_with_alignment(
+            let resp_a2 = cess_write_with_alignment(
                 registered_proof_seal,
                 piece_file_b_fd,
                 1016,
@@ -3085,18 +3089,18 @@ pub mod tests {
             }
 
             let pieces = vec![
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 127,
                     comm_p: (*resp_a1).comm_p,
                 },
-                fil_PublicPieceInfo {
+                cess_PublicPieceInfo {
                     num_bytes: 1016,
                     comm_p: (*resp_a2).comm_p,
                 },
             ];
 
             let resp_x =
-                fil_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
+                cess_generate_data_commitment(registered_proof_seal, pieces.as_ptr(), pieces.len());
 
             if (*resp_x).status_code != FCPResponseStatus::FCPNoError {
                 let msg = c_str_to_rust_str((*resp_x).error_msg);
@@ -3107,7 +3111,7 @@ pub mod tests {
             let staged_path_c_str = rust_str_to_c_str(staged_path.to_str().unwrap());
             let replica_path_c_str = rust_str_to_c_str(sealed_path.to_str().unwrap());
 
-            let resp_b1 = fil_seal_pre_commit_phase1(
+            let resp_b1 = cess_seal_pre_commit_phase1(
                 registered_proof_seal,
                 cache_dir_path_c_str,
                 staged_path_c_str,
@@ -3124,7 +3128,7 @@ pub mod tests {
                 panic!("seal_pre_commit_phase1 failed: {:?}", msg);
             }
 
-            let resp_b2 = fil_seal_pre_commit_phase2(
+            let resp_b2 = cess_seal_pre_commit_phase2(
                 (*resp_b1).seal_pre_commit_phase1_output_ptr,
                 (*resp_b1).seal_pre_commit_phase1_output_len,
                 cache_dir_path_c_str,
@@ -3145,7 +3149,7 @@ pub mod tests {
                 "pre-computed CommD and pre-commit CommD don't match"
             );
 
-            let resp_c1 = fil_seal_commit_phase1(
+            let resp_c1 = cess_seal_commit_phase1(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -3164,7 +3168,7 @@ pub mod tests {
                 panic!("seal_commit_phase1 failed: {:?}", msg);
             }
 
-            let resp_c2 = fil_seal_commit_phase2(
+            let resp_c2 = cess_seal_commit_phase2(
                 (*resp_c1).seal_commit_phase1_output_ptr,
                 (*resp_c1).seal_commit_phase1_output_len,
                 sector_id,
@@ -3176,7 +3180,7 @@ pub mod tests {
                 panic!("seal_commit_phase2 failed: {:?}", msg);
             }
 
-            let resp_d = fil_verify_seal(
+            let resp_d = cess_verify_seal(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -3195,7 +3199,7 @@ pub mod tests {
 
             assert!((*resp_d).is_valid, "proof was not valid");
 
-            let resp_c22 = fil_seal_commit_phase2(
+            let resp_c22 = cess_seal_commit_phase2(
                 (*resp_c1).seal_commit_phase1_output_ptr,
                 (*resp_c1).seal_commit_phase1_output_len,
                 sector_id,
@@ -3207,7 +3211,7 @@ pub mod tests {
                 panic!("seal_commit_phase2 failed: {:?}", msg);
             }
 
-            let resp_d2 = fil_verify_seal(
+            let resp_d2 = cess_verify_seal(
                 registered_proof_seal,
                 wrap((*resp_b2).comm_r),
                 wrap((*resp_b2).comm_d),
@@ -3226,19 +3230,19 @@ pub mod tests {
 
             assert!((*resp_d2).is_valid, "proof was not valid");
 
-            let seal_commit_responses: Vec<fil_SealCommitPhase2Response> =
+            let seal_commit_responses: Vec<cess_SealCommitPhase2Response> =
                 vec![(*resp_c2).clone(), (*resp_c22).clone()];
 
             let comm_rs = vec![
-                fil_32ByteArray {
+                cess_32ByteArray {
                     inner: (*resp_b2).comm_r,
                 },
-                fil_32ByteArray {
+                cess_32ByteArray {
                     inner: (*resp_b2).comm_r,
                 },
             ];
             let seeds = vec![seed, seed];
-            let resp_aggregate_proof = fil_aggregate_seal_proofs(
+            let resp_aggregate_proof = cess_aggregate_seal_proofs(
                 registered_proof_seal,
                 registered_aggregation,
                 comm_rs.as_ptr(),
@@ -3254,15 +3258,15 @@ pub mod tests {
                 panic!("aggregate_seal_proofs failed: {:?}", msg);
             }
 
-            let mut inputs: Vec<fil_AggregationInputs> = vec![
-                fil_AggregationInputs {
+            let mut inputs: Vec<cess_AggregationInputs> = vec![
+                cess_AggregationInputs {
                     comm_r: wrap((*resp_b2).comm_r),
                     comm_d: wrap((*resp_b2).comm_d),
                     sector_id,
                     ticket,
                     seed,
                 },
-                fil_AggregationInputs {
+                cess_AggregationInputs {
                     comm_r: wrap((*resp_b2).comm_r),
                     comm_d: wrap((*resp_b2).comm_d),
                     sector_id,
@@ -3271,7 +3275,7 @@ pub mod tests {
                 },
             ];
 
-            let resp_ad = fil_verify_aggregate_seal_proof(
+            let resp_ad = cess_verify_aggregate_seal_proof(
                 registered_proof_seal,
                 registered_aggregation,
                 prover_id,
@@ -3288,26 +3292,26 @@ pub mod tests {
 
             assert!((*resp_ad).is_valid, "aggregated proof was not valid");
 
-            fil_destroy_write_without_alignment_response(resp_a1);
-            fil_destroy_write_with_alignment_response(resp_a2);
-            fil_destroy_generate_data_commitment_response(resp_x);
+            cess_destroy_write_without_alignment_response(resp_a1);
+            cess_destroy_write_with_alignment_response(resp_a2);
+            cess_destroy_generate_data_commitment_response(resp_x);
 
-            fil_destroy_seal_pre_commit_phase1_response(resp_b1);
-            fil_destroy_seal_pre_commit_phase2_response(resp_b2);
-            fil_destroy_seal_commit_phase1_response(resp_c1);
+            cess_destroy_seal_pre_commit_phase1_response(resp_b1);
+            cess_destroy_seal_pre_commit_phase2_response(resp_b2);
+            cess_destroy_seal_commit_phase1_response(resp_c1);
 
-            fil_destroy_seal_commit_phase2_response(resp_c2);
-            fil_destroy_seal_commit_phase2_response(resp_c22);
+            cess_destroy_seal_commit_phase2_response(resp_c2);
+            cess_destroy_seal_commit_phase2_response(resp_c22);
 
-            fil_destroy_verify_seal_response(resp_d);
-            fil_destroy_verify_seal_response(resp_d2);
+            cess_destroy_verify_seal_response(resp_d);
+            cess_destroy_verify_seal_response(resp_d2);
 
-            fil_destroy_verify_aggregate_seal_response(resp_ad);
+            cess_destroy_verify_aggregate_seal_response(resp_ad);
 
-            //fil_destroy_aggregation_inputs_response(resp_c2_inputs);
-            //fil_destroy_aggregation_inputs_response(resp_c22_inputs);
+            //cess_destroy_aggregation_inputs_response(resp_c2_inputs);
+            //cess_destroy_aggregation_inputs_response(resp_c22_inputs);
 
-            fil_destroy_aggregate_proof(resp_aggregate_proof);
+            cess_destroy_aggregate_proof(resp_aggregate_proof);
 
             c_str_to_rust_str(cache_dir_path_c_str);
             c_str_to_rust_str(staged_path_c_str);

@@ -314,7 +314,7 @@ dependencies = [
  "quote 1.0.10",
  "serde",
  "serde_json",
- "syn 1.0.81",
+ "syn 1.0.82",
  "tempfile",
  "toml",
 ]
@@ -362,9 +362,9 @@ dependencies = [
 
 [[package]]
 name = "cess-proofs"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2c83b949ae42be4286d74e2b00249ebf4389db614e8c00d2dead57c60a7f80f"
+checksum = "eb66ec21084eb13db329f181540b913fd5e1e497bcea7b2a46b41b5dc0d09945"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -402,9 +402,9 @@ dependencies = [
 
 [[package]]
 name = "cess-proving-system-api"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed97690e25b70e75a39002a9f87834c134c0c7141708917f8a1226cf34480a5e"
+checksum = "e555efccc5705bcea4b751029bf81305b2f7386531621cb21320889b9e864e2f"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -436,9 +436,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-core"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4262dca27403b1bb5bd7dbd8dc2d98f3dcb82e5e07b72c83d6ca593e5023293e"
+checksum = "16933d5ca4b7a3c1c098d27b56db52a868aa5f6a445a54cb787bb0941e395e23"
 dependencies = [
  "aes",
  "anyhow",
@@ -477,9 +477,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-porep"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aa73931b05fae7d88542cc6959cf341a342f92e9da5d89abde2528ab58a30dd"
+checksum = "62b7026eb422de9d094909f6b39eee1d3b9a27a9c6ffed74926509e3f4be5532"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -520,9 +520,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-post"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e913e84139339942d94c62415f61c27ab348d317dabaf0df7c27096f4725b8f"
+checksum = "e4da9e41f418557a401afe9fc1643631430eb55a263d15e685b5845516768b7d"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -751,7 +751,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ccc0a48a9b826acdf4028595adc9db92caea352f7af011a3034acd172a52a0aa"
 dependencies = [
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
 ]
 
 [[package]]
@@ -888,7 +888,7 @@ checksum = "cc8bee3904e0525eff0d4b168208c92ddc14a24e9eb619745b69fdac87ea4142"
 dependencies = [
  "execute-command-tokens",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
 ]
 
 [[package]]
@@ -1751,7 +1751,7 @@ checksum = "43ce8670a1a1d0fc2514a3b846dacdb65646f9bd494b6674cfacbb4ce430bd7e"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
 ]
 
 [[package]]
@@ -1807,14 +1807,14 @@ checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.71"
+version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063bf466a64011ac24040a49009724ee60a57da1b437617ceb32e53ad61bfb19"
+checksum = "d0ffa0837f2dfa6fb90868c2b5468cad482e175f7dad97e7421951e663f2b527"
 dependencies = [
  "itoa",
  "ryu",
@@ -1896,9 +1896,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2afee18b8beb5a596ecb4a2dce128c719b4ba399d34126b9e4396e3f9860966"
+checksum = "8daf5dd0bb60cbd4137b1b587d2fc0ae729bc07cf01cd70b36a1ed5ade3b9d59"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
@@ -1913,7 +1913,7 @@ checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
  "unicode-xid 0.2.2",
 ]
 
@@ -1973,7 +1973,7 @@ checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
 ]
 
 [[package]]
@@ -2134,6 +2134,6 @@ checksum = "65f1a51723ec88c66d5d1fe80c841f17f63587d6691901d66be9bec6c3b51f73"
 dependencies = [
  "proc-macro2 1.0.32",
  "quote 1.0.10",
- "syn 1.0.81",
+ "syn 1.0.82",
  "synstructure",
 ]
