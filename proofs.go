@@ -1,3 +1,4 @@
+//go:build cgo
 // +build cgo
 
 package ffi
@@ -25,7 +26,7 @@ import (
 // VerifySeal returns true if the sealing operation from which its inputs were
 // derived was valid, and false if not.
 func VerifySeal(info proof5.SealVerifyInfo) (bool, error) {
-	sp, err := toFilRegisteredSealProof(info.SealProof)
+	sp, err := toCessRegisteredSealProof(info.SealProof)
 	if err != nil {
 		return false, err
 	}
@@ -45,10 +46,10 @@ func VerifySeal(info proof5.SealVerifyInfo) (bool, error) {
 		return false, err
 	}
 
-	resp := generated.FilVerifySeal(sp, commR, commD, proverID, to32ByteArray(info.Randomness), to32ByteArray(info.InteractiveRandomness), uint64(info.SectorID.Number), info.Proof, uint(len(info.Proof)))
+	resp := generated.CessVerifySeal(sp, commR, commD, proverID, to32ByteArray(info.Randomness), to32ByteArray(info.InteractiveRandomness), uint64(info.SectorID.Number), info.Proof, uint(len(info.Proof)))
 	resp.Deref()
 
-	defer generated.FilDestroyVerifySealResponse(resp)
+	defer generated.CessDestroyVerifySealResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return false, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -63,7 +64,7 @@ func VerifyAggregateSeals(aggregate proof5.AggregateSealVerifyProofAndInfos) (bo
 	}
 
 	spt := aggregate.SealProof // todo assuming this needs to be the same for all sectors, potentially makes sense to put in AggregateSealVerifyProofAndInfos
-	inputs := make([]generated.FilAggregationInputs, len(aggregate.Infos))
+	inputs := make([]generated.CessAggregationInputs, len(aggregate.Infos))
 
 	for i, info := range aggregate.Infos {
 		commR, err := to32ByteCommR(info.SealedCID)
@@ -76,7 +77,7 @@ func VerifyAggregateSeals(aggregate proof5.AggregateSealVerifyProofAndInfos) (bo
 			return false, err
 		}
 
-		inputs[i] = generated.FilAggregationInputs{
+		inputs[i] = generated.CessAggregationInputs{
 			CommR:    commR,
 			CommD:    commD,
 			SectorId: uint64(info.Number),
@@ -85,7 +86,7 @@ func VerifyAggregateSeals(aggregate proof5.AggregateSealVerifyProofAndInfos) (bo
 		}
 	}
 
-	sp, err := toFilRegisteredSealProof(spt)
+	sp, err := toCessRegisteredSealProof(spt)
 	if err != nil {
 		return false, err
 	}
@@ -95,15 +96,15 @@ func VerifyAggregateSeals(aggregate proof5.AggregateSealVerifyProofAndInfos) (bo
 		return false, err
 	}
 
-	rap, err := toFilRegisteredAggregationProof(aggregate.AggregateProof)
+	rap, err := toCessRegisteredAggregationProof(aggregate.AggregateProof)
 	if err != nil {
 		return false, err
 	}
 
-	resp := generated.FilVerifyAggregateSealProof(sp, rap, proverID, aggregate.Proof, uint(len(aggregate.Proof)), inputs, uint(len(inputs)))
+	resp := generated.CessVerifyAggregateSealProof(sp, rap, proverID, aggregate.Proof, uint(len(aggregate.Proof)), inputs, uint(len(inputs)))
 	resp.Deref()
 
-	defer generated.FilDestroyVerifyAggregateSealResponse(resp)
+	defer generated.CessDestroyVerifyAggregateSealResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return false, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -115,12 +116,12 @@ func VerifyAggregateSeals(aggregate proof5.AggregateSealVerifyProofAndInfos) (bo
 // VerifyWinningPoSt returns true if the Winning PoSt-generation operation from which its
 // inputs were derived was valid, and false if not.
 func VerifyWinningPoSt(info proof5.WinningPoStVerifyInfo) (bool, error) {
-	filPublicReplicaInfos, filPublicReplicaInfosLen, err := toFilPublicReplicaInfos(info.ChallengedSectors, "winning")
+	cessPublicReplicaInfos, cessPublicReplicaInfosLen, err := toCessPublicReplicaInfos(info.ChallengedSectors, "winning")
 	if err != nil {
 		return false, errors.Wrap(err, "failed to create public replica info array for FFI")
 	}
 
-	filPoStProofs, filPoStProofsLen, free, err := toFilPoStProofs(info.Proofs)
+	cessPoStProofs, cessPoStProofsLen, free, err := toCessPoStProofs(info.Proofs)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to create PoSt proofs array for FFI")
 	}
@@ -131,17 +132,17 @@ func VerifyWinningPoSt(info proof5.WinningPoStVerifyInfo) (bool, error) {
 		return false, err
 	}
 
-	resp := generated.FilVerifyWinningPost(
+	resp := generated.CessVerifyWinningPost(
 		to32ByteArray(info.Randomness),
-		filPublicReplicaInfos,
-		filPublicReplicaInfosLen,
-		filPoStProofs,
-		filPoStProofsLen,
+		cessPublicReplicaInfos,
+		cessPublicReplicaInfosLen,
+		cessPoStProofs,
+		cessPoStProofsLen,
 		proverID,
 	)
 	resp.Deref()
 
-	defer generated.FilDestroyVerifyWinningPostResponse(resp)
+	defer generated.CessDestroyVerifyWinningPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return false, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -153,12 +154,12 @@ func VerifyWinningPoSt(info proof5.WinningPoStVerifyInfo) (bool, error) {
 // VerifyWindowPoSt returns true if the Winning PoSt-generation operation from which its
 // inputs were derived was valid, and false if not.
 func VerifyWindowPoSt(info proof5.WindowPoStVerifyInfo) (bool, error) {
-	filPublicReplicaInfos, filPublicReplicaInfosLen, err := toFilPublicReplicaInfos(info.ChallengedSectors, "window")
+	cessPublicReplicaInfos, cessPublicReplicaInfosLen, err := toCessPublicReplicaInfos(info.ChallengedSectors, "window")
 	if err != nil {
 		return false, errors.Wrap(err, "failed to create public replica info array for FFI")
 	}
 
-	filPoStProofs, filPoStProofsLen, free, err := toFilPoStProofs(info.Proofs)
+	cessPoStProofs, cessPoStProofsLen, free, err := toCessPoStProofs(info.Proofs)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to create PoSt proofs array for FFI")
 	}
@@ -169,15 +170,15 @@ func VerifyWindowPoSt(info proof5.WindowPoStVerifyInfo) (bool, error) {
 		return false, err
 	}
 
-	resp := generated.FilVerifyWindowPost(
+	resp := generated.CessVerifyWindowPost(
 		to32ByteArray(info.Randomness),
-		filPublicReplicaInfos, filPublicReplicaInfosLen,
-		filPoStProofs, filPoStProofsLen,
+		cessPublicReplicaInfos, cessPublicReplicaInfosLen,
+		cessPoStProofs, cessPoStProofsLen,
 		proverID,
 	)
 	resp.Deref()
 
-	defer generated.FilDestroyVerifyWindowPostResponse(resp)
+	defer generated.CessDestroyVerifyWindowPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return false, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -189,36 +190,36 @@ func VerifyWindowPoSt(info proof5.WindowPoStVerifyInfo) (bool, error) {
 // GeneratePieceCommitment produces a piece commitment for the provided data
 // stored at a given path.
 func GeneratePieceCID(proofType abi.RegisteredSealProof, piecePath string, pieceSize abi.UnpaddedPieceSize) (cid.Cid, error) {
-	pieceFile, err := os.Open(piecePath)
+	pieceCesse, err := os.Open(piecePath)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	pcd, err := GeneratePieceCIDFromFile(proofType, pieceFile, pieceSize)
+	pcd, err := GeneratePieceCIDFromFile(proofType, pieceCesse, pieceSize)
 	if err != nil {
-		return cid.Undef, pieceFile.Close()
+		return cid.Undef, pieceCesse.Close()
 	}
 
-	return pcd, pieceFile.Close()
+	return pcd, pieceCesse.Close()
 }
 
 // GenerateDataCommitment produces a commitment for the sector containing the
 // provided pieces.
 func GenerateUnsealedCID(proofType abi.RegisteredSealProof, pieces []abi.PieceInfo) (cid.Cid, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	filPublicPieceInfos, filPublicPieceInfosLen, err := toFilPublicPieceInfos(pieces)
+	cessPublicPieceInfos, cessPublicPieceInfosLen, err := toCessPublicPieceInfos(pieces)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	resp := generated.FilGenerateDataCommitment(sp, filPublicPieceInfos, filPublicPieceInfosLen)
+	resp := generated.CessGenerateDataCommitment(sp, cessPublicPieceInfos, cessPublicPieceInfosLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateDataCommitmentResponse(resp)
+	defer generated.CessDestroyGenerateDataCommitmentResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -229,19 +230,19 @@ func GenerateUnsealedCID(proofType abi.RegisteredSealProof, pieces []abi.PieceIn
 
 // GeneratePieceCIDFromFile produces a piece CID for the provided data stored in
 //a given file.
-func GeneratePieceCIDFromFile(proofType abi.RegisteredSealProof, pieceFile *os.File, pieceSize abi.UnpaddedPieceSize) (cid.Cid, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+func GeneratePieceCIDFromFile(proofType abi.RegisteredSealProof, pieceCesse *os.File, pieceSize abi.UnpaddedPieceSize) (cid.Cid, error) {
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	pieceFd := pieceFile.Fd()
-	defer runtime.KeepAlive(pieceFile)
+	pieceFd := pieceCesse.Fd()
+	defer runtime.KeepAlive(pieceCesse)
 
-	resp := generated.FilGeneratePieceCommitment(sp, int32(pieceFd), uint64(pieceSize))
+	resp := generated.CessGeneratePieceCommitment(sp, int32(pieceFd), uint64(pieceSize))
 	resp.Deref()
 
-	defer generated.FilDestroyGeneratePieceCommitmentResponse(resp)
+	defer generated.CessDestroyGeneratePieceCommitmentResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -253,28 +254,28 @@ func GeneratePieceCIDFromFile(proofType abi.RegisteredSealProof, pieceFile *os.F
 // WriteWithAlignment
 func WriteWithAlignment(
 	proofType abi.RegisteredSealProof,
-	pieceFile *os.File,
+	pieceCesse *os.File,
 	pieceBytes abi.UnpaddedPieceSize,
-	stagedSectorFile *os.File,
+	stagedSectorCesse *os.File,
 	existingPieceSizes []abi.UnpaddedPieceSize,
 ) (leftAlignment, total abi.UnpaddedPieceSize, pieceCID cid.Cid, retErr error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return 0, 0, cid.Undef, err
 	}
 
-	pieceFd := pieceFile.Fd()
-	defer runtime.KeepAlive(pieceFile)
+	pieceFd := pieceCesse.Fd()
+	defer runtime.KeepAlive(pieceCesse)
 
-	stagedSectorFd := stagedSectorFile.Fd()
-	defer runtime.KeepAlive(stagedSectorFile)
+	stagedSectorFd := stagedSectorCesse.Fd()
+	defer runtime.KeepAlive(stagedSectorCesse)
 
-	filExistingPieceSizes, filExistingPieceSizesLen := toFilExistingPieceSizes(existingPieceSizes)
+	cessExistingPieceSizes, cessExistingPieceSizesLen := toCessExistingPieceSizes(existingPieceSizes)
 
-	resp := generated.FilWriteWithAlignment(sp, int32(pieceFd), uint64(pieceBytes), int32(stagedSectorFd), filExistingPieceSizes, filExistingPieceSizesLen)
+	resp := generated.CessWriteWithAlignment(sp, int32(pieceFd), uint64(pieceBytes), int32(stagedSectorFd), cessExistingPieceSizes, cessExistingPieceSizesLen)
 	resp.Deref()
 
-	defer generated.FilDestroyWriteWithAlignmentResponse(resp)
+	defer generated.CessDestroyWriteWithAlignmentResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return 0, 0, cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -291,25 +292,25 @@ func WriteWithAlignment(
 // WriteWithoutAlignment
 func WriteWithoutAlignment(
 	proofType abi.RegisteredSealProof,
-	pieceFile *os.File,
+	pieceCesse *os.File,
 	pieceBytes abi.UnpaddedPieceSize,
-	stagedSectorFile *os.File,
+	stagedSectorCesse *os.File,
 ) (abi.UnpaddedPieceSize, cid.Cid, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return 0, cid.Undef, err
 	}
 
-	pieceFd := pieceFile.Fd()
-	defer runtime.KeepAlive(pieceFile)
+	pieceFd := pieceCesse.Fd()
+	defer runtime.KeepAlive(pieceCesse)
 
-	stagedSectorFd := stagedSectorFile.Fd()
-	defer runtime.KeepAlive(stagedSectorFile)
+	stagedSectorFd := stagedSectorCesse.Fd()
+	defer runtime.KeepAlive(stagedSectorCesse)
 
-	resp := generated.FilWriteWithoutAlignment(sp, int32(pieceFd), uint64(pieceBytes), int32(stagedSectorFd))
+	resp := generated.CessWriteWithoutAlignment(sp, int32(pieceFd), uint64(pieceBytes), int32(stagedSectorFd))
 	resp.Deref()
 
-	defer generated.FilDestroyWriteWithoutAlignmentResponse(resp)
+	defer generated.CessDestroyWriteWithoutAlignmentResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return 0, cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -334,7 +335,7 @@ func SealPreCommitPhase1(
 	ticket abi.SealRandomness,
 	pieces []abi.PieceInfo,
 ) (phase1Output []byte, err error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -344,15 +345,15 @@ func SealPreCommitPhase1(
 		return nil, err
 	}
 
-	filPublicPieceInfos, filPublicPieceInfosLen, err := toFilPublicPieceInfos(pieces)
+	cessPublicPieceInfos, cessPublicPieceInfosLen, err := toCessPublicPieceInfos(pieces)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := generated.FilSealPreCommitPhase1(sp, cacheDirPath, stagedSectorPath, sealedSectorPath, uint64(sectorNum), proverID, to32ByteArray(ticket), filPublicPieceInfos, filPublicPieceInfosLen)
+	resp := generated.CessSealPreCommitPhase1(sp, cacheDirPath, stagedSectorPath, sealedSectorPath, uint64(sectorNum), proverID, to32ByteArray(ticket), cessPublicPieceInfos, cessPublicPieceInfosLen)
 	resp.Deref()
 
-	defer generated.FilDestroySealPreCommitPhase1Response(resp)
+	defer generated.CessDestroySealPreCommitPhase1Response(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -367,10 +368,10 @@ func SealPreCommitPhase2(
 	cacheDirPath string,
 	sealedSectorPath string,
 ) (sealedCID cid.Cid, unsealedCID cid.Cid, err error) {
-	resp := generated.FilSealPreCommitPhase2(phase1Output, uint(len(phase1Output)), cacheDirPath, sealedSectorPath)
+	resp := generated.CessSealPreCommitPhase2(phase1Output, uint(len(phase1Output)), cacheDirPath, sealedSectorPath)
 	resp.Deref()
 
-	defer generated.FilDestroySealPreCommitPhase2Response(resp)
+	defer generated.CessDestroySealPreCommitPhase2Response(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return cid.Undef, cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -401,7 +402,7 @@ func SealCommitPhase1(
 	seed abi.InteractiveSealRandomness,
 	pieces []abi.PieceInfo,
 ) (phase1Output []byte, err error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -421,15 +422,15 @@ func SealCommitPhase1(
 		return nil, err
 	}
 
-	filPublicPieceInfos, filPublicPieceInfosLen, err := toFilPublicPieceInfos(pieces)
+	cessPublicPieceInfos, cessPublicPieceInfosLen, err := toCessPublicPieceInfos(pieces)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := generated.FilSealCommitPhase1(sp, commR, commD, cacheDirPath, sealedSectorPath, uint64(sectorNum), proverID, to32ByteArray(ticket), to32ByteArray(seed), filPublicPieceInfos, filPublicPieceInfosLen)
+	resp := generated.CessSealCommitPhase1(sp, commR, commD, cacheDirPath, sealedSectorPath, uint64(sectorNum), proverID, to32ByteArray(ticket), to32ByteArray(seed), cessPublicPieceInfos, cessPublicPieceInfosLen)
 	resp.Deref()
 
-	defer generated.FilDestroySealCommitPhase1Response(resp)
+	defer generated.CessDestroySealCommitPhase1Response(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -449,10 +450,10 @@ func SealCommitPhase2(
 		return nil, err
 	}
 
-	resp := generated.FilSealCommitPhase2(phase1Output, uint(len(phase1Output)), uint64(sectorNum), proverID)
+	resp := generated.CessSealCommitPhase2(phase1Output, uint(len(phase1Output)), uint64(sectorNum), proverID)
 	resp.Deref()
 
-	defer generated.FilDestroySealCommitPhase2Response(resp)
+	defer generated.CessDestroySealCommitPhase2Response(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -463,13 +464,13 @@ func SealCommitPhase2(
 
 // TODO AggregateSealProofs it only needs InteractiveRandomness out of the aggregateInfo.Infos
 func AggregateSealProofs(aggregateInfo proof5.AggregateSealVerifyProofAndInfos, proofs [][]byte) (out []byte, err error) {
-	sp, err := toFilRegisteredSealProof(aggregateInfo.SealProof)
+	sp, err := toCessRegisteredSealProof(aggregateInfo.SealProof)
 	if err != nil {
 		return nil, err
 	}
 
-	commRs := make([]generated.Fil32ByteArray, len(aggregateInfo.Infos))
-	seeds := make([]generated.Fil32ByteArray, len(aggregateInfo.Infos))
+	commRs := make([]generated.Cess32ByteArray, len(aggregateInfo.Infos))
+	seeds := make([]generated.Cess32ByteArray, len(aggregateInfo.Infos))
 	for i, info := range aggregateInfo.Infos {
 		seeds[i] = to32ByteArray(info.InteractiveRandomness)
 		commRs[i], err = to32ByteCommR(info.SealedCID)
@@ -478,23 +479,23 @@ func AggregateSealProofs(aggregateInfo proof5.AggregateSealVerifyProofAndInfos, 
 		}
 	}
 
-	pfs := make([]generated.FilSealCommitPhase2Response, len(proofs))
+	pfs := make([]generated.CessSealCommitPhase2Response, len(proofs))
 	for i := range proofs {
-		pfs[i] = generated.FilSealCommitPhase2Response{
+		pfs[i] = generated.CessSealCommitPhase2Response{
 			ProofPtr: proofs[i],
 			ProofLen: uint(len(proofs[i])),
 		}
 	}
 
-	rap, err := toFilRegisteredAggregationProof(aggregateInfo.AggregateProof)
+	rap, err := toCessRegisteredAggregationProof(aggregateInfo.AggregateProof)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := generated.FilAggregateSealProofs(sp, rap, commRs, uint(len(commRs)), seeds, uint(len(seeds)), pfs, uint(len(pfs)))
+	resp := generated.CessAggregateSealProofs(sp, rap, commRs, uint(len(commRs)), seeds, uint(len(seeds)), pfs, uint(len(pfs)))
 	resp.Deref()
 
-	defer generated.FilDestroyAggregateProof(resp)
+	defer generated.CessDestroyAggregateProof(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -537,7 +538,7 @@ func UnsealRange(
 	unpaddedByteIndex uint64,
 	unpaddedBytesAmount uint64,
 ) error {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return err
 	}
@@ -558,10 +559,10 @@ func UnsealRange(
 	unsealOutputFd := unsealOutput.Fd()
 	defer runtime.KeepAlive(unsealOutput)
 
-	resp := generated.FilUnsealRange(sp, cacheDirPath, int32(sealedSectorFd), int32(unsealOutputFd), uint64(sectorNum), proverID, to32ByteArray(ticket), commD, unpaddedByteIndex, unpaddedBytesAmount)
+	resp := generated.CessUnsealRange(sp, cacheDirPath, int32(sealedSectorFd), int32(unsealOutputFd), uint64(sectorNum), proverID, to32ByteArray(ticket), commD, unpaddedByteIndex, unpaddedBytesAmount)
 	resp.Deref()
 
-	defer generated.FilDestroyUnsealRangeResponse(resp)
+	defer generated.CessDestroyUnsealRangeResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -582,12 +583,12 @@ func GenerateWinningPoStSectorChallenge(
 		return nil, err
 	}
 
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := generated.FilGenerateWinningPostSectorChallenge(
+	resp := generated.CessGenerateWinningPostSectorChallenge(
 		pp, to32ByteArray(randomness),
 		eligibleSectorsLen, proverID,
 	)
@@ -595,7 +596,7 @@ func GenerateWinningPoStSectorChallenge(
 	resp.IdsPtr = make([]uint64, resp.IdsLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateWinningPostSectorChallenge(resp)
+	defer generated.CessDestroyGenerateWinningPostSectorChallenge(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -616,7 +617,7 @@ func GenerateWinningPoSt(
 	privateSectorInfo SortedPrivateSectorInfo,
 	randomness abi.PoStRandomness,
 ) ([]proof5.PoStProof, error) {
-	filReplicas, filReplicasLen, free, err := toFilPrivateReplicaInfos(privateSectorInfo.Values(), "winning")
+	cessReplicas, cessReplicasLen, free, err := toCessPrivateReplicaInfos(privateSectorInfo.Values(), "winning")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create private replica info array for FFI")
 	}
@@ -627,22 +628,22 @@ func GenerateWinningPoSt(
 		return nil, err
 	}
 
-	resp := generated.FilGenerateWinningPost(
+	resp := generated.CessGenerateWinningPost(
 		to32ByteArray(randomness),
-		filReplicas, filReplicasLen,
+		cessReplicas, cessReplicasLen,
 		proverID,
 	)
 	resp.Deref()
-	resp.ProofsPtr = make([]generated.FilPoStProof, resp.ProofsLen)
+	resp.ProofsPtr = make([]generated.CessPoStProof, resp.ProofsLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateWinningPostResponse(resp)
+	defer generated.CessDestroyGenerateWinningPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	proofs, err := fromFilPoStProofs(resp.ProofsPtr)
+	proofs, err := fromCessPoStProofs(resp.ProofsPtr)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +657,7 @@ func GenerateWindowPoSt(
 	privateSectorInfo SortedPrivateSectorInfo,
 	randomness abi.PoStRandomness,
 ) ([]proof5.PoStProof, []abi.SectorNumber, error) {
-	filReplicas, filReplicasLen, free, err := toFilPrivateReplicaInfos(privateSectorInfo.Values(), "window")
+	cessReplicas, cessReplicasLen, free, err := toCessPrivateReplicaInfos(privateSectorInfo.Values(), "window")
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create private replica info array for FFI")
 	}
@@ -667,15 +668,15 @@ func GenerateWindowPoSt(
 		return nil, nil, err
 	}
 
-	resp := generated.FilGenerateWindowPost(to32ByteArray(randomness), filReplicas, filReplicasLen, proverID)
+	resp := generated.CessGenerateWindowPost(to32ByteArray(randomness), cessReplicas, cessReplicasLen, proverID)
 	resp.Deref()
-	resp.ProofsPtr = make([]generated.FilPoStProof, resp.ProofsLen)
+	resp.ProofsPtr = make([]generated.CessPoStProof, resp.ProofsLen)
 	resp.Deref()
 	resp.FaultySectorsPtr = resp.FaultySectorsPtr[:resp.FaultySectorsLen]
 
-	defer generated.FilDestroyGenerateWindowPostResponse(resp)
+	defer generated.CessDestroyGenerateWindowPostResponse(resp)
 
-	faultySectors, err := fromFilPoStFaultySectors(resp.FaultySectorsPtr, resp.FaultySectorsLen)
+	faultySectors, err := fromCessPoStFaultySectors(resp.FaultySectorsPtr, resp.FaultySectorsLen)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to parse faulty sectors list: %w", err)
 	}
@@ -684,7 +685,7 @@ func GenerateWindowPoSt(
 		return nil, faultySectors, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	proofs, err := fromFilPoStProofs(resp.ProofsPtr)
+	proofs, err := fromCessPoStProofs(resp.ProofsPtr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -695,12 +696,12 @@ func GenerateWindowPoSt(
 // GetGPUDevices produces a slice of strings, each representing the name of a
 // detected GPU device.
 func GetGPUDevices() ([]string, error) {
-	resp := generated.FilGetGpuDevices()
+	resp := generated.CessGetGpuDevices()
 	resp.Deref()
 	resp.DevicesPtr = make([]string, resp.DevicesLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGpuDeviceResponse(resp)
+	defer generated.CessDestroyGpuDeviceResponse(resp)
 
 	out := make([]string, len(resp.DevicesPtr))
 	for idx := range out {
@@ -712,15 +713,15 @@ func GetGPUDevices() ([]string, error) {
 
 // GetSealVersion
 func GetSealVersion(proofType abi.RegisteredSealProof) (string, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return "", err
 	}
 
-	resp := generated.FilGetSealVersion(sp)
+	resp := generated.CessGetSealVersion(sp)
 	resp.Deref()
 
-	defer generated.FilDestroyStringResponse(resp)
+	defer generated.CessDestroyStringResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return "", errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -731,15 +732,15 @@ func GetSealVersion(proofType abi.RegisteredSealProof) (string, error) {
 
 // GetPoStVersion
 func GetPoStVersion(proofType abi.RegisteredPoStProof) (string, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return "", err
 	}
 
-	resp := generated.FilGetPostVersion(pp)
+	resp := generated.CessGetPostVersion(pp)
 	resp.Deref()
 
-	defer generated.FilDestroyStringResponse(resp)
+	defer generated.CessDestroyStringResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return "", errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -749,12 +750,12 @@ func GetPoStVersion(proofType abi.RegisteredPoStProof) (string, error) {
 }
 
 func GetNumPartitionForFallbackPost(proofType abi.RegisteredPoStProof, numSectors uint) (uint, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return 0, err
 	}
-	resp := generated.FilGetNumPartitionForFallbackPost(pp, numSectors)
-	defer generated.FilDestroyGetNumPartitionForFallbackPostResponse(resp)
+	resp := generated.CessGetNumPartitionForFallbackPost(pp, numSectors)
+	defer generated.CessDestroyGetNumPartitionForFallbackPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return 0, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -765,10 +766,10 @@ func GetNumPartitionForFallbackPost(proofType abi.RegisteredPoStProof, numSector
 
 // ClearCache
 func ClearCache(sectorSize uint64, cacheDirPath string) error {
-	resp := generated.FilClearCache(sectorSize, cacheDirPath)
+	resp := generated.CessClearCache(sectorSize, cacheDirPath)
 	resp.Deref()
 
-	defer generated.FilDestroyClearCacheResponse(resp)
+	defer generated.CessDestroyClearCacheResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -778,15 +779,15 @@ func ClearCache(sectorSize uint64, cacheDirPath string) error {
 }
 
 func FauxRep(proofType abi.RegisteredSealProof, cacheDirPath string, sealedSectorPath string) (cid.Cid, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	resp := generated.FilFauxrep(sp, cacheDirPath, sealedSectorPath)
+	resp := generated.CessFauxrep(sp, cacheDirPath, sealedSectorPath)
 	resp.Deref()
 
-	defer generated.FilDestroyFauxrepResponse(resp)
+	defer generated.CessDestroyFauxrepResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -796,15 +797,15 @@ func FauxRep(proofType abi.RegisteredSealProof, cacheDirPath string, sealedSecto
 }
 
 func FauxRep2(proofType abi.RegisteredSealProof, cacheDirPath string, existingPAuxPath string) (cid.Cid, error) {
-	sp, err := toFilRegisteredSealProof(proofType)
+	sp, err := toCessRegisteredSealProof(proofType)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	resp := generated.FilFauxrep2(sp, cacheDirPath, existingPAuxPath)
+	resp := generated.CessFauxrep2(sp, cacheDirPath, existingPAuxPath)
 	resp.Deref()
 
-	defer generated.FilDestroyFauxrepResponse(resp)
+	defer generated.CessDestroyFauxrepResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return cid.Undef, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -813,7 +814,7 @@ func FauxRep2(proofType abi.RegisteredSealProof, cacheDirPath string, existingPA
 	return commcid.ReplicaCommitmentV1ToCID(resp.Commitment[:])
 }
 
-func toFilExistingPieceSizes(src []abi.UnpaddedPieceSize) ([]uint64, uint) {
+func toCessExistingPieceSizes(src []abi.UnpaddedPieceSize) ([]uint64, uint) {
 	out := make([]uint64, len(src))
 
 	for idx := range out {
@@ -823,8 +824,8 @@ func toFilExistingPieceSizes(src []abi.UnpaddedPieceSize) ([]uint64, uint) {
 	return out, uint(len(out))
 }
 
-func toFilPublicPieceInfos(src []abi.PieceInfo) ([]generated.FilPublicPieceInfo, uint, error) {
-	out := make([]generated.FilPublicPieceInfo, len(src))
+func toCessPublicPieceInfos(src []abi.PieceInfo) ([]generated.CessPublicPieceInfo, uint, error) {
+	out := make([]generated.CessPublicPieceInfo, len(src))
 
 	for idx := range out {
 		commP, err := to32ByteCommP(src[idx].PieceCID)
@@ -832,7 +833,7 @@ func toFilPublicPieceInfos(src []abi.PieceInfo) ([]generated.FilPublicPieceInfo,
 			return nil, 0, err
 		}
 
-		out[idx] = generated.FilPublicPieceInfo{
+		out[idx] = generated.CessPublicPieceInfo{
 			NumBytes: uint64(src[idx].Size.Unpadded()),
 			CommP:    commP.Inner,
 		}
@@ -841,8 +842,8 @@ func toFilPublicPieceInfos(src []abi.PieceInfo) ([]generated.FilPublicPieceInfo,
 	return out, uint(len(out)), nil
 }
 
-func toFilPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.FilPublicReplicaInfo, uint, error) {
-	out := make([]generated.FilPublicReplicaInfo, len(src))
+func toCessPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.CessPublicReplicaInfo, uint, error) {
+	out := make([]generated.CessPublicReplicaInfo, len(src))
 
 	for idx := range out {
 		commR, err := to32ByteCommR(src[idx].SealedCID)
@@ -850,7 +851,7 @@ func toFilPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.F
 			return nil, 0, err
 		}
 
-		out[idx] = generated.FilPublicReplicaInfo{
+		out[idx] = generated.CessPublicReplicaInfo{
 			CommR:    commR.Inner,
 			SectorId: uint64(src[idx].SectorNumber),
 		}
@@ -862,7 +863,7 @@ func toFilPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.F
 				return nil, 0, err
 			}
 
-			out[idx].RegisteredProof, err = toFilRegisteredPoStProof(p)
+			out[idx].RegisteredProof, err = toCessRegisteredPoStProof(p)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -872,7 +873,7 @@ func toFilPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.F
 				return nil, 0, err
 			}
 
-			out[idx].RegisteredProof, err = toFilRegisteredPoStProof(p)
+			out[idx].RegisteredProof, err = toCessRegisteredPoStProof(p)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -882,18 +883,18 @@ func toFilPublicReplicaInfos(src []proof5.SectorInfo, typ string) ([]generated.F
 	return out, uint(len(out)), nil
 }
 
-func toFilPrivateReplicaInfo(src PrivateSectorInfo) (generated.FilPrivateReplicaInfo, func(), error) {
+func toCessPrivateReplicaInfo(src PrivateSectorInfo) (generated.CessPrivateReplicaInfo, func(), error) {
 	commR, err := to32ByteCommR(src.SealedCID)
 	if err != nil {
-		return generated.FilPrivateReplicaInfo{}, func() {}, err
+		return generated.CessPrivateReplicaInfo{}, func() {}, err
 	}
 
-	pp, err := toFilRegisteredPoStProof(src.PoStProofType)
+	pp, err := toCessRegisteredPoStProof(src.PoStProofType)
 	if err != nil {
-		return generated.FilPrivateReplicaInfo{}, func() {}, err
+		return generated.CessPrivateReplicaInfo{}, func() {}, err
 	}
 
-	out := generated.FilPrivateReplicaInfo{
+	out := generated.CessPrivateReplicaInfo{
 		RegisteredProof: pp,
 		CacheDirPath:    src.CacheDirPath,
 		CommR:           commR.Inner,
@@ -904,10 +905,10 @@ func toFilPrivateReplicaInfo(src PrivateSectorInfo) (generated.FilPrivateReplica
 	return out, allocs.Free, nil
 }
 
-func toFilPrivateReplicaInfos(src []PrivateSectorInfo, typ string) ([]generated.FilPrivateReplicaInfo, uint, func(), error) {
+func toCessPrivateReplicaInfos(src []PrivateSectorInfo, typ string) ([]generated.CessPrivateReplicaInfo, uint, func(), error) {
 	allocs := make([]AllocationManager, len(src))
 
-	out := make([]generated.FilPrivateReplicaInfo, len(src))
+	out := make([]generated.CessPrivateReplicaInfo, len(src))
 
 	for idx := range out {
 		commR, err := to32ByteCommR(src[idx].SealedCID)
@@ -915,12 +916,12 @@ func toFilPrivateReplicaInfos(src []PrivateSectorInfo, typ string) ([]generated.
 			return nil, 0, func() {}, err
 		}
 
-		pp, err := toFilRegisteredPoStProof(src[idx].PoStProofType)
+		pp, err := toCessRegisteredPoStProof(src[idx].PoStProofType)
 		if err != nil {
 			return nil, 0, func() {}, err
 		}
 
-		out[idx] = generated.FilPrivateReplicaInfo{
+		out[idx] = generated.CessPrivateReplicaInfo{
 			RegisteredProof: pp,
 			CacheDirPath:    src[idx].CacheDirPath,
 			CommR:           commR.Inner,
@@ -938,7 +939,7 @@ func toFilPrivateReplicaInfos(src []PrivateSectorInfo, typ string) ([]generated.
 	}, nil
 }
 
-func fromFilPoStFaultySectors(ptr []uint64, l uint) ([]abi.SectorNumber, error) {
+func fromCessPoStFaultySectors(ptr []uint64, l uint) ([]abi.SectorNumber, error) {
 	if l == 0 {
 		return nil, nil
 	}
@@ -959,13 +960,13 @@ func fromFilPoStFaultySectors(ptr []uint64, l uint) ([]abi.SectorNumber, error) 
 	return snums, nil
 }
 
-func fromFilPoStProofs(src []generated.FilPoStProof) ([]proof5.PoStProof, error) {
+func fromCessPoStProofs(src []generated.CessPoStProof) ([]proof5.PoStProof, error) {
 	out := make([]proof5.PoStProof, len(src))
 
 	for idx := range out {
 		src[idx].Deref()
 
-		pp, err := fromFilRegisteredPoStProof(src[idx].RegisteredProof)
+		pp, err := fromCessRegisteredPoStProof(src[idx].RegisteredProof)
 		if err != nil {
 			return nil, err
 		}
@@ -979,17 +980,17 @@ func fromFilPoStProofs(src []generated.FilPoStProof) ([]proof5.PoStProof, error)
 	return out, nil
 }
 
-func toFilPoStProofs(src []proof5.PoStProof) ([]generated.FilPoStProof, uint, func(), error) {
+func toCessPoStProofs(src []proof5.PoStProof) ([]generated.CessPoStProof, uint, func(), error) {
 	allocs := make([]AllocationManager, len(src))
 
-	out := make([]generated.FilPoStProof, len(src))
+	out := make([]generated.CessPoStProof, len(src))
 	for idx := range out {
-		pp, err := toFilRegisteredPoStProof(src[idx].PoStProof)
+		pp, err := toCessRegisteredPoStProof(src[idx].PoStProof)
 		if err != nil {
 			return nil, 0, func() {}, err
 		}
 
-		out[idx] = generated.FilPoStProof{
+		out[idx] = generated.CessPoStProof{
 			RegisteredProof: pp,
 			ProofLen:        uint(len(src[idx].ProofBytes)),
 			ProofPtr:        src[idx].ProofBytes,
@@ -1005,136 +1006,136 @@ func toFilPoStProofs(src []proof5.PoStProof) ([]generated.FilPoStProof, uint, fu
 	}, nil
 }
 
-func to32ByteArray(in []byte) generated.Fil32ByteArray {
-	var out generated.Fil32ByteArray
+func to32ByteArray(in []byte) generated.Cess32ByteArray {
+	var out generated.Cess32ByteArray
 	copy(out.Inner[:], in)
 	return out
 }
 
-func toProverID(minerID abi.ActorID) (generated.Fil32ByteArray, error) {
+func toProverID(minerID abi.ActorID) (generated.Cess32ByteArray, error) {
 	maddr, err := address.NewIDAddress(uint64(minerID))
 	if err != nil {
-		return generated.Fil32ByteArray{}, errors.Wrap(err, "failed to convert ActorID to prover id ([32]byte) for FFI")
+		return generated.Cess32ByteArray{}, errors.Wrap(err, "failed to convert ActorID to prover id ([32]byte) for FFI")
 	}
 
 	return to32ByteArray(maddr.Payload()), nil
 }
 
-func fromFilRegisteredPoStProof(p generated.FilRegisteredPoStProof) (abi.RegisteredPoStProof, error) {
+func fromCessRegisteredPoStProof(p generated.CessRegisteredPoStProof) (abi.RegisteredPoStProof, error) {
 	switch p {
-	case generated.FilRegisteredPoStProofStackedDrgWinning2KiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWinning2KiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWinning2KiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWinning8MiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWinning8MiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWinning8MiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWinning512MiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWinning512MiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWinning512MiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWinning32GiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWinning32GiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWinning32GiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWinning64GiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWinning64GiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWinning64GiBV1, nil
 
-	case generated.FilRegisteredPoStProofStackedDrgWindow2KiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWindow2KiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWindow2KiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWindow8MiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWindow8MiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWindow8MiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWindow512MiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWindow512MiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWindow512MiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWindow32GiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWindow32GiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWindow32GiBV1, nil
-	case generated.FilRegisteredPoStProofStackedDrgWindow64GiBV1:
+	case generated.CessRegisteredPoStProofStackedDrgWindow64GiBV1:
 		return abi.RegisteredPoStProof_StackedDrgWindow64GiBV1, nil
 	default:
 		return 0, errors.Errorf("no mapping to abi.RegisteredPoStProof value available for: %v", p)
 	}
 }
 
-func toFilRegisteredPoStProof(p abi.RegisteredPoStProof) (generated.FilRegisteredPoStProof, error) {
+func toCessRegisteredPoStProof(p abi.RegisteredPoStProof) (generated.CessRegisteredPoStProof, error) {
 	switch p {
 	case abi.RegisteredPoStProof_StackedDrgWinning2KiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWinning2KiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWinning2KiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWinning8MiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWinning8MiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWinning8MiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWinning512MiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWinning512MiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWinning512MiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWinning32GiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWinning32GiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWinning32GiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWinning64GiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWinning64GiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWinning64GiBV1, nil
 
 	case abi.RegisteredPoStProof_StackedDrgWindow2KiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWindow2KiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWindow2KiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWindow8MiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWindow8MiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWindow8MiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWindow512MiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWindow512MiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWindow512MiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWindow32GiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWindow32GiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWindow32GiBV1, nil
 	case abi.RegisteredPoStProof_StackedDrgWindow64GiBV1:
-		return generated.FilRegisteredPoStProofStackedDrgWindow64GiBV1, nil
+		return generated.CessRegisteredPoStProofStackedDrgWindow64GiBV1, nil
 	default:
 		return 0, errors.Errorf("no mapping to abi.RegisteredPoStProof value available for: %v", p)
 	}
 }
 
-func toFilRegisteredSealProof(p abi.RegisteredSealProof) (generated.FilRegisteredSealProof, error) {
+func toCessRegisteredSealProof(p abi.RegisteredSealProof) (generated.CessRegisteredSealProof, error) {
 	switch p {
 	case abi.RegisteredSealProof_StackedDrg2KiBV1:
-		return generated.FilRegisteredSealProofStackedDrg2KiBV1, nil
+		return generated.CessRegisteredSealProofStackedDrg2KiBV1, nil
 	case abi.RegisteredSealProof_StackedDrg8MiBV1:
-		return generated.FilRegisteredSealProofStackedDrg8MiBV1, nil
+		return generated.CessRegisteredSealProofStackedDrg8MiBV1, nil
 	case abi.RegisteredSealProof_StackedDrg512MiBV1:
-		return generated.FilRegisteredSealProofStackedDrg512MiBV1, nil
+		return generated.CessRegisteredSealProofStackedDrg512MiBV1, nil
 	case abi.RegisteredSealProof_StackedDrg32GiBV1:
-		return generated.FilRegisteredSealProofStackedDrg32GiBV1, nil
+		return generated.CessRegisteredSealProofStackedDrg32GiBV1, nil
 	case abi.RegisteredSealProof_StackedDrg64GiBV1:
-		return generated.FilRegisteredSealProofStackedDrg64GiBV1, nil
+		return generated.CessRegisteredSealProofStackedDrg64GiBV1, nil
 
 	case abi.RegisteredSealProof_StackedDrg2KiBV1_1:
-		return generated.FilRegisteredSealProofStackedDrg2KiBV11, nil
+		return generated.CessRegisteredSealProofStackedDrg2KiBV11, nil
 	case abi.RegisteredSealProof_StackedDrg8MiBV1_1:
-		return generated.FilRegisteredSealProofStackedDrg8MiBV11, nil
+		return generated.CessRegisteredSealProofStackedDrg8MiBV11, nil
 	case abi.RegisteredSealProof_StackedDrg512MiBV1_1:
-		return generated.FilRegisteredSealProofStackedDrg512MiBV11, nil
+		return generated.CessRegisteredSealProofStackedDrg512MiBV11, nil
 	case abi.RegisteredSealProof_StackedDrg32GiBV1_1:
-		return generated.FilRegisteredSealProofStackedDrg32GiBV11, nil
+		return generated.CessRegisteredSealProofStackedDrg32GiBV11, nil
 	case abi.RegisteredSealProof_StackedDrg64GiBV1_1:
-		return generated.FilRegisteredSealProofStackedDrg64GiBV11, nil
+		return generated.CessRegisteredSealProofStackedDrg64GiBV11, nil
 	default:
 		return 0, errors.Errorf("no mapping to C.FFIRegisteredSealProof value available for: %v", p)
 	}
 }
 
-func toFilRegisteredAggregationProof(p abi.RegisteredAggregationProof) (generated.FilRegisteredAggregationProof, error) {
+func toCessRegisteredAggregationProof(p abi.RegisteredAggregationProof) (generated.CessRegisteredAggregationProof, error) {
 	switch p {
 	case abi.RegisteredAggregationProof_SnarkPackV1:
-		return generated.FilRegisteredAggregationProofSnarkPackV1, nil
+		return generated.CessRegisteredAggregationProofSnarkPackV1, nil
 	default:
 		return 0, errors.Errorf("no mapping to abi.RegisteredAggregationProof value available for: %v", p)
 	}
 }
 
-func to32ByteCommD(unsealedCID cid.Cid) (generated.Fil32ByteArray, error) {
+func to32ByteCommD(unsealedCID cid.Cid) (generated.Cess32ByteArray, error) {
 	commD, err := commcid.CIDToDataCommitmentV1(unsealedCID)
 	if err != nil {
-		return generated.Fil32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommD")
+		return generated.Cess32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommD")
 	}
 
 	return to32ByteArray(commD), nil
 }
 
-func to32ByteCommR(sealedCID cid.Cid) (generated.Fil32ByteArray, error) {
+func to32ByteCommR(sealedCID cid.Cid) (generated.Cess32ByteArray, error) {
 	commD, err := commcid.CIDToReplicaCommitmentV1(sealedCID)
 	if err != nil {
-		return generated.Fil32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommR")
+		return generated.Cess32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommR")
 	}
 
 	return to32ByteArray(commD), nil
 }
 
-func to32ByteCommP(pieceCID cid.Cid) (generated.Fil32ByteArray, error) {
+func to32ByteCommP(pieceCID cid.Cid) (generated.Cess32ByteArray, error) {
 	commP, err := commcid.CIDToPieceCommitmentV1(pieceCID)
 	if err != nil {
-		return generated.Fil32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommP")
+		return generated.Cess32ByteArray{}, errors.Wrap(err, "failed to transform sealed CID to CommP")
 	}
 
 	return to32ByteArray(commP), nil
@@ -1154,12 +1155,12 @@ type stringHeader struct {
 	Len  int
 }
 
-func toVanillaProofs(src [][]byte) ([]generated.FilVanillaProof, func()) {
+func toVanillaProofs(src [][]byte) ([]generated.CessVanillaProof, func()) {
 	allocs := make([]AllocationManager, len(src))
 
-	out := make([]generated.FilVanillaProof, len(src))
+	out := make([]generated.CessVanillaProof, len(src))
 	for idx := range out {
-		out[idx] = generated.FilVanillaProof{
+		out[idx] = generated.CessVanillaProof{
 			ProofLen: uint(len(src[idx])),
 			ProofPtr: src[idx],
 		}
@@ -1174,7 +1175,7 @@ func toVanillaProofs(src [][]byte) ([]generated.FilVanillaProof, func()) {
 	}
 }
 
-func toPartitionProofs(src []PartitionProof) ([]generated.FilPartitionSnarkProof, func(), error) {
+func toPartitionProofs(src []PartitionProof) ([]generated.CessPartitionSnarkProof, func(), error) {
 	allocs := make([]AllocationManager, len(src))
 	cleanup := func() {
 		for idx := range allocs {
@@ -1182,14 +1183,14 @@ func toPartitionProofs(src []PartitionProof) ([]generated.FilPartitionSnarkProof
 		}
 	}
 
-	out := make([]generated.FilPartitionSnarkProof, len(src))
+	out := make([]generated.CessPartitionSnarkProof, len(src))
 	for idx := range out {
-		rp, err := toFilRegisteredPoStProof(src[idx].PoStProof)
+		rp, err := toCessRegisteredPoStProof(src[idx].PoStProof)
 		if err != nil {
 			return nil, cleanup, err
 		}
 
-		out[idx] = generated.FilPartitionSnarkProof{
+		out[idx] = generated.CessPartitionSnarkProof{
 			RegisteredProof: rp,
 			ProofLen:        uint(len(src[idx].ProofBytes)),
 			ProofPtr:        src[idx].ProofBytes,

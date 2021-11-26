@@ -1,4 +1,5 @@
-//+build cgo
+//go:build cgo
+// +build cgo
 
 package ffi
 
@@ -28,7 +29,7 @@ func GeneratePoStFallbackSectorChallenges(
 		return nil, err
 	}
 
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func GeneratePoStFallbackSectorChallenges(
 		secIds[i] = uint64(sid)
 	}
 
-	resp := generated.FilGenerateFallbackSectorChallenges(
+	resp := generated.CessGenerateFallbackSectorChallenges(
 		pp, to32ByteArray(randomness), secIds, uint(len(secIds)),
 		proverID,
 	)
@@ -46,7 +47,7 @@ func GeneratePoStFallbackSectorChallenges(
 	resp.IdsPtr = resp.IdsPtr[:resp.IdsLen]
 	resp.ChallengesPtr = resp.ChallengesPtr[:resp.ChallengesLen]
 
-	defer generated.FilDestroyGenerateFallbackSectorChallengesResponse(resp)
+	defer generated.CessDestroyGenerateFallbackSectorChallengesResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -72,15 +73,15 @@ func GenerateSingleVanillaProof(
 	challange []uint64,
 ) ([]byte, error) {
 
-	rep, free, err := toFilPrivateReplicaInfo(replica)
+	rep, free, err := toCessPrivateReplicaInfo(replica)
 	if err != nil {
 		return nil, err
 	}
 	defer free()
 
-	resp := generated.FilGenerateSingleVanillaProof(rep, challange, uint(len(challange)))
+	resp := generated.CessGenerateSingleVanillaProof(rep, challange, uint(len(challange)))
 	resp.Deref()
-	defer generated.FilDestroyGenerateSingleVanillaProofResponse(resp)
+	defer generated.CessDestroyGenerateSingleVanillaProofResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
@@ -97,7 +98,7 @@ func GenerateWinningPoStWithVanilla(
 	randomness abi.PoStRandomness,
 	proofs [][]byte,
 ) ([]proof.PoStProof, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -109,23 +110,23 @@ func GenerateWinningPoStWithVanilla(
 	fproofs, discard := toVanillaProofs(proofs)
 	defer discard()
 
-	resp := generated.FilGenerateWinningPostWithVanilla(
+	resp := generated.CessGenerateWinningPostWithVanilla(
 		pp,
 		to32ByteArray(randomness),
 		proverID,
 		fproofs, uint(len(proofs)),
 	)
 	resp.Deref()
-	resp.ProofsPtr = make([]generated.FilPoStProof, resp.ProofsLen)
+	resp.ProofsPtr = make([]generated.CessPoStProof, resp.ProofsLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateWinningPostResponse(resp)
+	defer generated.CessDestroyGenerateWinningPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	out, err := fromFilPoStProofs(resp.ProofsPtr)
+	out, err := fromCessPoStProofs(resp.ProofsPtr)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +140,7 @@ func GenerateWindowPoStWithVanilla(
 	randomness abi.PoStRandomness,
 	proofs [][]byte,
 ) ([]proof.PoStProof, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -151,23 +152,23 @@ func GenerateWindowPoStWithVanilla(
 	fproofs, discard := toVanillaProofs(proofs)
 	defer discard()
 
-	resp := generated.FilGenerateWindowPostWithVanilla(
+	resp := generated.CessGenerateWindowPostWithVanilla(
 		pp,
 		to32ByteArray(randomness),
 		proverID,
 		fproofs, uint(len(proofs)),
 	)
 	resp.Deref()
-	resp.ProofsPtr = make([]generated.FilPoStProof, resp.ProofsLen)
+	resp.ProofsPtr = make([]generated.CessPoStProof, resp.ProofsLen)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateWindowPostResponse(resp)
+	defer generated.CessDestroyGenerateWindowPostResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	out, err := fromFilPoStProofs(resp.ProofsPtr)
+	out, err := fromCessPoStProofs(resp.ProofsPtr)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +185,7 @@ func GenerateSinglePartitionWindowPoStWithVanilla(
 	proofs [][]byte,
 	partitionIndex uint,
 ) (*PartitionProof, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func GenerateSinglePartitionWindowPoStWithVanilla(
 	fproofs, discard := toVanillaProofs(proofs)
 	defer discard()
 
-	resp := generated.FilGenerateSingleWindowPostWithVanilla(
+	resp := generated.CessGenerateSingleWindowPostWithVanilla(
 		pp,
 		to32ByteArray(randomness),
 		proverID,
@@ -205,13 +206,13 @@ func GenerateSinglePartitionWindowPoStWithVanilla(
 	)
 	resp.Deref()
 
-	defer generated.FilDestroyGenerateSingleWindowPostWithVanillaResponse(resp)
+	defer generated.CessDestroyGenerateSingleWindowPostWithVanillaResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	dpp, err := fromFilRegisteredPoStProof(resp.PartitionProof.RegisteredProof)
+	dpp, err := fromCessRegisteredPoStProof(resp.PartitionProof.RegisteredProof)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +229,7 @@ func MergeWindowPoStPartitionProofs(
 	proofType abi.RegisteredPoStProof,
 	partitionProofs []PartitionProof,
 ) (*proof.PoStProof, error) {
-	pp, err := toFilRegisteredPoStProof(proofType)
+	pp, err := toCessRegisteredPoStProof(proofType)
 	if err != nil {
 		return nil, err
 	}
@@ -239,19 +240,19 @@ func MergeWindowPoStPartitionProofs(
 		return nil, err
 	}
 
-	resp := generated.FilMergeWindowPostPartitionProofs(
+	resp := generated.CessMergeWindowPostPartitionProofs(
 		pp,
 		fproofs, uint(len(fproofs)),
 	)
 	resp.Deref()
 
-	defer generated.FilDestroyMergeWindowPostPartitionProofsResponse(resp)
+	defer generated.CessDestroyMergeWindowPostPartitionProofsResponse(resp)
 
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
 
-	dpp, err := fromFilRegisteredPoStProof(resp.Proof.RegisteredProof)
+	dpp, err := fromCessRegisteredPoStProof(resp.Proof.RegisteredProof)
 	if err != nil {
 		return nil, err
 	}

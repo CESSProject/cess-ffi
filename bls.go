@@ -1,22 +1,23 @@
-//+build cgo
+//go:build cgo
+// +build cgo
 
 package ffi
 
-// #cgo LDFLAGS: ${SRCDIR}/libfilcrypto.a
-// #cgo pkg-config: ${SRCDIR}/filcrypto.pc
-// #include "./filcrypto.h"
+// #cgo LDFLAGS: ${SRCDIR}/libcesscrypto.a
+// #cgo pkg-config: ${SRCDIR}/cesscrypto.pc
+// #include "./cesscrypto.h"
 import "C"
 import (
-	"github.com/filecoin-project/filecoin-ffi/generated"
+	"github.com/CESSProject/cess-ffi/generated"
 )
 
 // Hash computes the digest of a message
 func Hash(message Message) Digest {
-	resp := generated.FilHash(message, uint(len(message)))
+	resp := generated.CessHash(message, uint(len(message)))
 	resp.Deref()
 	resp.Digest.Deref()
 
-	defer generated.FilDestroyHashResponse(resp)
+	defer generated.CessDestroyHashResponse(resp)
 
 	var out Digest
 	copy(out[:], resp.Digest.Inner[:])
@@ -36,7 +37,7 @@ func Verify(signature *Signature, digests []Digest, publicKeys []PublicKey) bool
 		copy(flattenedPublicKeys[(PublicKeyBytes*idx):(PublicKeyBytes*(1+idx))], publicKey[:])
 	}
 
-	isValid := generated.FilVerify(signature[:], flattenedDigests, uint(len(flattenedDigests)), flattenedPublicKeys, uint(len(flattenedPublicKeys)))
+	isValid := generated.CessVerify(signature[:], flattenedDigests, uint(len(flattenedDigests)), flattenedPublicKeys, uint(len(flattenedPublicKeys)))
 
 	return isValid > 0
 }
@@ -55,7 +56,7 @@ func HashVerify(signature *Signature, messages []Message, publicKeys []PublicKey
 		copy(flattenedPublicKeys[(PublicKeyBytes*idx):(PublicKeyBytes*(1+idx))], publicKey[:])
 	}
 
-	isValid := generated.FilHashVerify(signature[:], flattenedMessages, uint(len(flattenedMessages)), messagesSizes, uint(len(messagesSizes)), flattenedPublicKeys, uint(len(flattenedPublicKeys)))
+	isValid := generated.CessHashVerify(signature[:], flattenedMessages, uint(len(flattenedMessages)), messagesSizes, uint(len(messagesSizes)), flattenedPublicKeys, uint(len(flattenedPublicKeys)))
 
 	return isValid > 0
 }
@@ -70,12 +71,12 @@ func Aggregate(signatures []Signature) *Signature {
 		copy(flattenedSignatures[(SignatureBytes*idx):(SignatureBytes*(1+idx))], sig[:])
 	}
 
-	resp := generated.FilAggregate(flattenedSignatures, uint(len(flattenedSignatures)))
+	resp := generated.CessAggregate(flattenedSignatures, uint(len(flattenedSignatures)))
 	if resp == nil {
 		return nil
 	}
 
-	defer generated.FilDestroyAggregateResponse(resp)
+	defer generated.CessDestroyAggregateResponse(resp)
 
 	resp.Deref()
 	resp.Signature.Deref()
@@ -87,10 +88,10 @@ func Aggregate(signatures []Signature) *Signature {
 
 // PrivateKeyGenerate generates a private key
 func PrivateKeyGenerate() PrivateKey {
-	resp := generated.FilPrivateKeyGenerate()
+	resp := generated.CessPrivateKeyGenerate()
 	resp.Deref()
 	resp.PrivateKey.Deref()
-	defer generated.FilDestroyPrivateKeyGenerateResponse(resp)
+	defer generated.CessDestroyPrivateKeyGenerateResponse(resp)
 
 	var out PrivateKey
 	copy(out[:], resp.PrivateKey.Inner[:])
@@ -99,13 +100,13 @@ func PrivateKeyGenerate() PrivateKey {
 
 // PrivateKeyGenerate generates a private key in a predictable manner
 func PrivateKeyGenerateWithSeed(seed PrivateKeyGenSeed) PrivateKey {
-	var ary generated.Fil32ByteArray
+	var ary generated.Cess32ByteArray
 	copy(ary.Inner[:], seed[:])
 
-	resp := generated.FilPrivateKeyGenerateWithSeed(ary)
+	resp := generated.CessPrivateKeyGenerateWithSeed(ary)
 	resp.Deref()
 	resp.PrivateKey.Deref()
-	defer generated.FilDestroyPrivateKeyGenerateResponse(resp)
+	defer generated.CessDestroyPrivateKeyGenerateResponse(resp)
 
 	var out PrivateKey
 	copy(out[:], resp.PrivateKey.Inner[:])
@@ -114,11 +115,11 @@ func PrivateKeyGenerateWithSeed(seed PrivateKeyGenSeed) PrivateKey {
 
 // PrivateKeySign signs a message
 func PrivateKeySign(privateKey PrivateKey, message Message) *Signature {
-	resp := generated.FilPrivateKeySign(privateKey[:], message, uint(len(message)))
+	resp := generated.CessPrivateKeySign(privateKey[:], message, uint(len(message)))
 	resp.Deref()
 	resp.Signature.Deref()
 
-	defer generated.FilDestroyPrivateKeySignResponse(resp)
+	defer generated.CessDestroyPrivateKeySignResponse(resp)
 
 	var signature Signature
 	copy(signature[:], resp.Signature.Inner[:])
@@ -127,24 +128,24 @@ func PrivateKeySign(privateKey PrivateKey, message Message) *Signature {
 
 // PrivateKeyPublicKey gets the public key for a private key
 func PrivateKeyPublicKey(privateKey PrivateKey) PublicKey {
-	resp := generated.FilPrivateKeyPublicKey(privateKey[:])
+	resp := generated.CessPrivateKeyPublicKey(privateKey[:])
 	resp.Deref()
 	resp.PublicKey.Deref()
 
-	defer generated.FilDestroyPrivateKeyPublicKeyResponse(resp)
+	defer generated.CessDestroyPrivateKeyPublicKeyResponse(resp)
 
 	var publicKey PublicKey
 	copy(publicKey[:], resp.PublicKey.Inner[:])
 	return publicKey
 }
 
-// CreateZeroSignature creates a zero signature, used as placeholder in filecoin.
+// CreateZeroSignature creates a zero signature, used as placeholder in Cessecoin.
 func CreateZeroSignature() Signature {
-	resp := generated.FilCreateZeroSignature()
+	resp := generated.CessCreateZeroSignature()
 	resp.Deref()
 	resp.Signature.Deref()
 
-	defer generated.FilDestroyZeroSignatureResponse(resp)
+	defer generated.CessDestroyZeroSignatureResponse(resp)
 
 	var sig Signature
 	copy(sig[:], resp.Signature.Inner[:])
