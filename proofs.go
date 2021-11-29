@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
 
-	"github.com/filecoin-project/filecoin-ffi/generated"
+	"github.com/CESSProject/cess-ffi/generated"
 )
 
 // VerifySeal returns true if the sealing operation from which its inputs were

@@ -1,4 +1,4 @@
-module github.com/filecoin-project/filecoin-ffi
+module github.com/CESSProject/cess-ffi
 
 go 1.13
 

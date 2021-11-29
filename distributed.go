@@ -4,7 +4,7 @@
 package ffi
 
 import (
-	"github.com/filecoin-project/filecoin-ffi/generated"
+	"github.com/CESSProject/cess-ffi/generated"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 	"github.com/pkg/errors"
