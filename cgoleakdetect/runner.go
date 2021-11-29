@@ -1,4 +1,4 @@
-//+build cgo
+// +build cgo
 
 package main
 
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	ffi "github.com/CESSProject/cess-ffi/generated"
+	ffi "github.com/CESSProject/cess-ffi"
 )
 
 func main() {
