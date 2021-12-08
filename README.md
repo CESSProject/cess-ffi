@@ -18,9 +18,9 @@ build tooling will attempt to compile a static library from local Rust sources.
 
 ### Installation notes
 
-By default, building this will download a pre-built binary of the ffi. The advantages for downloading it are faster build times, and not requiring a rust toolchain and build environment.
+By default, building this will download a pre-built binary of the ffi.  The advantages for downloading it are faster build times, and not requiring a rust toolchain and build environment.
 
-The disadvantage to downloading the pre-built binary is that it will not be optimized for your specific hardware. This means that if raw performance is of utmost importance to you, it's highly recommended that you build from source.
+The disadvantage to downloading the pre-built binary is that it will not be optimized for your specific hardware.  This means that if raw performance is of utmost importance to you, it's highly recommended that you build from source.
 
 ### Building from Source
 
@@ -34,7 +34,7 @@ rm .install-filcrypto \
     ; FFI_BUILD_FROM_SOURCE=1 FFI_USE_BLST_PORTABLE=1 make
 ```
 
-By default, a 'gpu' option is used in the proofs library. This feature is also used in FFI unless explicitly disabled. To disable building with the 'gpu' dependency, set `FFI_USE_GPU=0`:
+By default, a 'gpu' option is used in the proofs library.  This feature is also used in FFI unless explicitly disabled.  To disable building with the 'gpu' dependency, set `FFI_USE_GPU=0`:
 
 ```shell
 rm .install-filcrypto \
@@ -44,7 +44,7 @@ rm .install-filcrypto \
 
 #### Experimental CUDA build support
 
-An experimental 'gpu' option using CUDA can be used in the proofs library. This feature is disabled by default (opencl is the default, when `FFI_USE_GPU=1` is set.). To enable building with the 'gpu' CUDA dependency, set `FFI_USE_CUDA=1` when building from source.
+An experimental 'gpu' option using CUDA can be used in the proofs library.  This feature is disabled by default (opencl is the default, when `FFI_USE_GPU=1` is set.).  To enable building with the 'gpu' CUDA dependency, set `FFI_USE_CUDA=1` when building from source.
 
 ```shell
 rm .install-filcrypto \
@@ -52,7 +52,7 @@ rm .install-filcrypto \
     ; FFI_BUILD_FROM_SOURCE=1 FFI_USE_CUDA=1 make
 ```
 
-By default, a 'multicore-sdr' option is used in the proofs library. This feature is also used in FFI unless explicitly disabled. To disable building with the 'multicore-sdr' dependency, set `FFI_USE_MULTICORE_SDR=0`:
+By default, a 'multicore-sdr' option is used in the proofs library.  This feature is also used in FFI unless explicitly disabled.  To disable building with the 'multicore-sdr' dependency, set `FFI_USE_MULTICORE_SDR=0`:
 
 ```shell
 rm .install-filcrypto \
@@ -76,10 +76,10 @@ the filecoin-ffi project, you need to do a few things:
 Get the source, add this repo as a submodule to your repo, build it and point to it:
 
 ```shell
-$ go get github.com/CESSProject/cess-ffi
-$ git submodule add https://github.com/CESSProject/cess-ffi.git internal/ffi
-$ make -C internal/cess-ffi
-$ go mod edit -replace=github.com/CESSProject/cess-ffi=./internal/ffi
+$ go get github.com/filecoin-project/filecoin-ffi
+$ git submodule add https://github.com/filecoin-project/filecoin-ffi.git extern/filecoin-ffi
+$ make -C extern/filecoin-ffi
+$ go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
 ```
 
 ## Updating CGO Bindings
