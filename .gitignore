@@ -4,6 +4,7 @@
 **/target
 .install-cesscrypto
 cesscrypto.h
+cesscrypto.pc
 cess.h
 cess.pc
 *.a
