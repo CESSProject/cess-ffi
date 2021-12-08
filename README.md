@@ -78,7 +78,7 @@ Get the source, add this repo as a submodule to your repo, build it and point to
 ```shell
 $ go get github.com/CESSProject/cess-ffi
 $ git submodule add https://github.com/CESSProject/cess-ffi.git internal/ffi
-$ make -C internal/cess-ffi
+$ make -C internal/ffi
 $ go mod edit -replace=github.com/CESSProject/cess-ffi=./internal/ffi
 ```
 
