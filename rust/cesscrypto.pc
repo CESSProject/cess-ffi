@@ -1,4 +1,4 @@
 Name: cesscrypto
-Version: 84ebc32f8b4247eca52c06ef2d8bbed11839fdee
+Version: fbc28abc49d93ad5cb8fc8fe8f644b60b702efe8
 Description: C bindings for CESS Proofs
 Libs:  -lhwloc -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lOpenCL -lgcc_s -lutil -lrt -lpthread -lm -ldl -lc
