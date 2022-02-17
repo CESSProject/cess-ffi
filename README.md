@@ -76,10 +76,10 @@ the filecoin-ffi project, you need to do a few things:
 Get the source, add this repo as a submodule to your repo, build it and point to it:
 
 ```shell
-$ go get github.com/CESSProject/cess-ffi
-$ git submodule add https://github.com/CESSProject/cess-ffi.git internal/ffi
-$ make -C internal/ffi
-$ go mod edit -replace=github.com/CESSProject/cess-ffi=./internal/ffi
+go get github.com/CESSProject/cess-ffi
+git submodule add https://github.com/CESSProject/cess-ffi.git internal/ffi
+make -C internal/ffi
+go mod edit -replace=github.com/CESSProject/cess-ffi=./internal/ffi
 ```
 
 ## Updating CGO Bindings
