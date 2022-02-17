@@ -1,4 +1,5 @@
-//+build cgo
+//go:build cgo
+// +build cgo
 
 package ffi
 
@@ -216,7 +217,8 @@ func WorkflowProofsLifecycle(t TestHelper) {
 
 	// generate a PoSt over the proving set before importing, just to exercise
 	// the new API
-	privateInfo := NewSortedPrivateSectorInfo(PrivateSectorInfo{
+	psInfos := make([]PrivateSectorInfo, 0)
+	psInfos = append(psInfos, PrivateSectorInfo{
 		SectorInfo: prf.SectorInfo{
 			SectorNumber: sectorNum,
 			SealedCID:    sealedCID,
@@ -225,6 +227,8 @@ func WorkflowProofsLifecycle(t TestHelper) {
 		PoStProofType:    winningPostProofType,
 		SealedSectorPath: sealedSectorFile.Name(),
 	})
+
+	privateInfo := NewSortedPrivateSectorInfo(psInfos)
 
 	provingSet := []prf.SectorInfo{{
 		SealProof:    sealProofType,
