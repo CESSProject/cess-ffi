@@ -65,8 +65,8 @@ rm .install-filcrypto \
 If rust-fil-proofs has changed from commit X to Y and you wish to get Y into
 the filecoin-ffi project, you need to do a few things:
 
-1. Update the rust-filecoin-proofs-api [Cargo.toml][1] file to point to Y
-2. Run `cd rust && cargo update -p "filecoin-proofs-api"` from the root of the filecoin-ffi project
+1. Update the cess-proving-system-api [Cargo.toml][1] file to point to Y
+2. Run `cd rust && cargo update -p "cess-proving-system-api"` from the root of the cess-ffi project
 3. After the previous step alters your Cargo.lock file, commit and push
 
 ## go get
