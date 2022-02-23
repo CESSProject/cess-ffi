@@ -362,9 +362,9 @@ dependencies = [
 
 [[package]]
 name = "cess-proofs"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb66ec21084eb13db329f181540b913fd5e1e497bcea7b2a46b41b5dc0d09945"
+checksum = "b4f204581176a6cef3d98b959301b3e9448156bcc4307fc1267ed4e63e1c4c3d"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -402,9 +402,9 @@ dependencies = [
 
 [[package]]
 name = "cess-proving-system-api"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e555efccc5705bcea4b751029bf81305b2f7386531621cb21320889b9e864e2f"
+checksum = "735901d46acbacf68d476e25d2a37dfd4b555bc27946cee5f562c580c31865b7"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -436,9 +436,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-core"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16933d5ca4b7a3c1c098d27b56db52a868aa5f6a445a54cb787bb0941e395e23"
+checksum = "a5d65bd3cde2e198bc77a34022af493c8c07dd4365a7c161fc65156dd5979068"
 dependencies = [
  "aes",
  "anyhow",
@@ -477,9 +477,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-porep"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b7026eb422de9d094909f6b39eee1d3b9a27a9c6ffed74926509e3f4be5532"
+checksum = "1d249087312c57ec0e6781bf57f2e21e6611099009e4aec7272ad8dbd4d47b67"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -520,9 +520,9 @@ dependencies = [
 
 [[package]]
 name = "cess-sp-post"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4da9e41f418557a401afe9fc1643631430eb55a263d15e685b5845516768b7d"
+checksum = "6e3696313e846c6a386740a2523fc3cd4260c08b550e96bc186852f0909ae47a"
 dependencies = [
  "anyhow",
  "bellperson",
